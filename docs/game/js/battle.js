@@ -38,7 +38,7 @@ class BattleSystem {
     if (this.isVictory||this.isDefeat) return;
     this.turnTimer++;
     if (this.state==='BOSS_INTRO') { this.bossAppearTimer--; if(this.bossAppearTimer<=0) this.state='BATTLE'; return; }
-    if (this.state!=='BATTLE') { if(this.turnTimer>30) { this.state='BATTLE'; this.allParty.forEach(h=>{ if(h.isAlive) h.setAction('idle'); }); } return; }
+    if (this.state!=='BATTLE') { if(this.turnTimer>60) { this.state='BATTLE'; this.allParty.forEach(h=>{ if(h.isAlive) h.setAction('idle'); }); } return; }
     if (this.turnTimer < Math.floor(this.turnDelay/this.battleSpeed)) return;
     this.turnTimer = 0;
 
@@ -167,17 +167,22 @@ class BattleSystem {
     ctx.fillStyle='#6b7280'; ctx.textAlign='right';
     ctx.fillText(`Turn ${this.turn}`, W-8, 15);
 
-    // Walk animation: characters move toward center before fighting
+    // Smooth walk: ease-in-out interpolation
     const centerX = W/2;
     const fightY = H*0.55;
-    const walkOffset = this.turn < 2 ? Math.min(1, this.turnTimer/30) * 30 : 30;
+    const walkDur = 60; // frames for full walk
+    let t = this.state==='WAVE_INTRO' || this.state==='BOSS_INTRO' ? Math.min(1, this.turnTimer/walkDur) : 1;
+    // easeInOutCubic
+    t = t<0.5 ? 4*t*t*t : 1-Math.pow(-2*t+2,3)/2;
 
     // Heroes (left side, walk right toward center)
     this.allParty.forEach((hero,i)=>{
-      const baseX = W*0.15 + i*70;
-      const targetX = centerX - 50;
-      const x = this.turn < 2 ? baseX + walkOffset * (i===0?1:0.5) : targetX - (this.allParty.length-1-i)*55;
-      const y = fightY + (hero.position==='FRONT'?15:40) - i*8;
+      const startX = W*0.08 + i*55;
+      const endX = centerX - 60 - (this.allParty.length-1-i)*52;
+      const x = startX + (endX - startX) * t;
+      const startY = fightY + 30 + i*20;
+      const endY = fightY + (hero.position==='FRONT'?20:45) - i*10;
+      const y = startY + (endY - startY) * t;
       hero._dx=x; hero._dy=y;
       hero.draw(ctx,x,y,65);
     });
@@ -185,10 +190,12 @@ class BattleSystem {
     // Enemies (right side, walk left toward center)
     const aliveE = this.enemies.filter(e=>e.isAlive);
     aliveE.forEach((enemy,i)=>{
-      const baseX = W*0.85 - i*60;
-      const targetX = centerX + 50;
-      const x = this.turn < 2 ? baseX - walkOffset * 0.8 : targetX + i*55;
-      const y = fightY + (enemy.isBoss?-15:0) + i*5;
+      const startX = W*0.92 - i*55;
+      const endX = centerX + 60 + i*52;
+      const x = startX + (endX - startX) * t;
+      const startY = fightY + (enemy.isBoss?-20:20) + i*15;
+      const endY = fightY + (enemy.isBoss?-20:20) + i*10;
+      const y = startY + (endY - startY) * t;
       enemy._dx=x; enemy._dy=y;
       enemy.draw(ctx,x,y,enemy.isBoss?70:50);
     });
