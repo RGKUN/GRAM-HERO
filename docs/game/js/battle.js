@@ -16,7 +16,7 @@ class BattleSystem {
     this.effects = [];
     this.battleLog = [];
     this.turnTimer = 0;
-    this.turnDelay = 50;
+    this.turnDelay = 80;
     this.isVictory = false;
     this.isDefeat = false;
     this.bossDefeated = false;
@@ -236,16 +236,24 @@ class BattleSystem {
 
     // Overlays
     if (this.state==='WAVE_INTRO') {
-      ctx.fillStyle='rgba(0,0,0,0.6)'; ctx.fillRect(0,H/2-35,W,70);
-      ctx.fillStyle='#f1c40f'; ctx.font='bold 22px monospace'; ctx.textAlign='center';
-      ctx.fillText(`WAVE ${this.currentWave+1}`, W/2, H/2+8);
+      ctx.fillStyle='rgba(0,0,0,0.8)';
+      ctx.beginPath(); ctx.roundRect(W*0.15, 28, W*0.7, 36, 8); ctx.fill();
+      ctx.strokeStyle='#f1c40f'; ctx.lineWidth=2;
+      ctx.beginPath(); ctx.roundRect(W*0.15, 28, W*0.7, 36, 8); ctx.stroke();
+      ctx.lineWidth=1;
+      ctx.fillStyle='#f1c40f'; ctx.font='bold 16px monospace'; ctx.textAlign='center';
+      ctx.fillText(`⚔ WAVE ${this.currentWave+1}`, W/2, 52);
     }
     if (this.state==='BOSS_INTRO') {
-      ctx.fillStyle='rgba(0,0,0,0.7)'; ctx.fillRect(0,H/2-45,W,90);
-      ctx.fillStyle='#e74c3c'; ctx.font='bold 26px monospace'; ctx.textAlign='center';
-      ctx.fillText('⚠ BOSS ⚠', W/2, H/2-5);
-      ctx.fillStyle='#f1c40f'; ctx.font='14px monospace';
-      ctx.fillText(this.enemies[0]?.name||'', W/2, H/2+25);
+      ctx.fillStyle='rgba(139,0,0,0.85)';
+      ctx.beginPath(); ctx.roundRect(W*0.1, 28, W*0.8, 44, 8); ctx.fill();
+      ctx.strokeStyle='#e74c3c'; ctx.lineWidth=2;
+      ctx.beginPath(); ctx.roundRect(W*0.1, 28, W*0.8, 44, 8); ctx.stroke();
+      ctx.lineWidth=1;
+      ctx.fillStyle='#e74c3c'; ctx.font='bold 14px monospace'; ctx.textAlign='center';
+      ctx.fillText('⚠ BOSS ⚠', W/2, 45);
+      ctx.fillStyle='#f1c40f'; ctx.font='bold 12px monospace';
+      ctx.fillText(this.enemies[0]?.name||'', W/2, 63);
     }
     if (this.isVictory) {
       ctx.fillStyle='rgba(0,0,0,0.65)'; ctx.fillRect(0,0,W,H);

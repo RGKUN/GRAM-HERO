@@ -103,15 +103,15 @@ class Hero {
     const hasSprite = this.classType === 'SWORDMAN' && g;
     if (hasSprite) {
       // Animation speed: idle 25, walk 12, attack 6, hit 10
-      const speed = this.animAction==='attack'?6:this.animAction==='walk'?12:this.animAction==='hit'?10:25;
+      const speed = this.animAction==='attack'?10:this.animAction==='walk'?12:this.animAction==='hit'?18:25;
       const maxFrames = this.animAction==='attack'?6:this.animAction==='hit'?2:4;
       if (this.animTimer % speed === 0) {
         this.animFrame++;
         if (this.animAction==='attack' || this.animAction==='hit') {
           // Play once then return to idle
           if (this.animFrame >= maxFrames) {
-            this.animAction = 'idle';
-            this.animFrame = 0;
+            if (this.animAction==='hit') { this.animFrame=maxFrames-1; this.animTimer=-30; }
+            else { this.animAction = 'idle'; this.animFrame = 0; }
           }
         } else {
           this.animFrame = this.animFrame % maxFrames;
