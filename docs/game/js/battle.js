@@ -38,7 +38,7 @@ class BattleSystem {
     if (this.isVictory||this.isDefeat) return;
     this.turnTimer++;
     if (this.state==='BOSS_INTRO') { this.bossAppearTimer--; if(this.bossAppearTimer<=0) this.state='BATTLE'; return; }
-    if (this.state!=='BATTLE') { if(this.turnTimer>30) this.state='BATTLE'; return; }
+    if (this.state!=='BATTLE') { if(this.turnTimer>30) { this.state='BATTLE'; this.allParty.forEach(h=>{ if(h.isAlive) h.setAction('idle'); }); } return; }
     if (this.turnTimer < Math.floor(this.turnDelay/this.battleSpeed)) return;
     this.turnTimer = 0;
 
@@ -143,10 +143,10 @@ class BattleSystem {
     this.effects = this.effects.filter(e=>{ e.timer--; return e.timer>0; });
   }
   drawBattle(ctx, W, H) {
-    // BG image or gradient fallback
+    // BG image full (no ground overlay)
     if (window.game && window.game.assets && window.game.assets.bgStage) {
       ctx.drawImage(window.game.assets.bgStage, 0, 0, W, H);
-      ctx.fillStyle='rgba(0,0,0,0.4)';
+      ctx.fillStyle='rgba(0,0,0,0.35)';
       ctx.fillRect(0,0,W,H);
     } else {
       const bg = ctx.createLinearGradient(0,0,0,H);
@@ -156,36 +156,41 @@ class BattleSystem {
       ctx.fillStyle = bg;
       ctx.fillRect(0,0,W,H);
     }
-    // Ground
-    ctx.fillStyle = '#1a2332';
-    ctx.fillRect(0,H*0.7,W,H*0.3);
-    ctx.fillStyle = '#1e2a3a';
-    for(let i=0;i<W;i+=20) ctx.fillRect(i,H*0.7,10,2);
 
-    // Stage info
-    ctx.fillStyle = '#6b7280';
-    ctx.font = '10px monospace';
-    ctx.textAlign = 'left';
-    ctx.fillText(`Stage ${this.stage} | Wave ${Math.min(this.currentWave+1,this.totalWaves)}/${this.totalWaves} | Turn ${this.turn}`, 8, 16);
+    // Stage info (top bar)
+    ctx.fillStyle='rgba(0,0,0,0.6)';
+    ctx.fillRect(0,0,W,22);
+    ctx.fillStyle='#f1c40f';
+    ctx.font='bold 10px monospace';
+    ctx.textAlign='left';
+    ctx.fillText(`Stage ${this.stage} | Wave ${Math.min(this.currentWave+1,this.totalWaves)}/${this.totalWaves}`, 8, 15);
+    ctx.fillStyle='#6b7280'; ctx.textAlign='right';
+    ctx.fillText(`Turn ${this.turn}`, W-8, 15);
 
-    // Heroes
-    const heroY = H*0.65;
+    // Walk animation: characters move toward center before fighting
+    const centerX = W/2;
+    const fightY = H*0.55;
+    const walkOffset = this.turn < 2 ? Math.min(1, this.turnTimer/30) * 30 : 30;
+
+    // Heroes (left side, walk right toward center)
     this.allParty.forEach((hero,i)=>{
-      const x = 55 + i*85;
-      const y = heroY;
+      const baseX = W*0.15 + i*70;
+      const targetX = centerX - 50;
+      const x = this.turn < 2 ? baseX + walkOffset * (i===0?1:0.5) : targetX - (this.allParty.length-1-i)*55;
+      const y = fightY + (hero.position==='FRONT'?15:40) - i*8;
       hero._dx=x; hero._dy=y;
-      hero.draw(ctx,x,y,42);
+      hero.draw(ctx,x,y,65);
     });
 
-    // Enemies
+    // Enemies (right side, walk left toward center)
     const aliveE = this.enemies.filter(e=>e.isAlive);
-    const eSpacing = Math.min(80, (W*0.55)/Math.max(aliveE.length,1));
-    const eStartX = W*0.55;
     aliveE.forEach((enemy,i)=>{
-      const x = eStartX + i*eSpacing;
-      const y = heroY + (enemy.isBoss ? -20 : 0);
+      const baseX = W*0.85 - i*60;
+      const targetX = centerX + 50;
+      const x = this.turn < 2 ? baseX - walkOffset * 0.8 : targetX + i*55;
+      const y = fightY + (enemy.isBoss?-15:0) + i*5;
       enemy._dx=x; enemy._dy=y;
-      enemy.draw(ctx,x,y,enemy.isBoss?50:32);
+      enemy.draw(ctx,x,y,enemy.isBoss?70:50);
     });
 
     // Damage numbers

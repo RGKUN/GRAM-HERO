@@ -97,16 +97,20 @@ class UIManager {
     this.drawNav(ctx,W,H,'HEROES');
   }
   drawBattleHUD(ctx, W, H) {
-    ctx.fillStyle=Utils.hexToRgba('#0d1117',0.8);
-    ctx.beginPath(); ctx.roundRect(W-88,H-105,80,50,8); ctx.fill();
-    ctx.strokeStyle='#2d3748';
-    ctx.beginPath(); ctx.roundRect(W-88,H-105,80,50,8); ctx.stroke();
+    // Auto button (bigger, clearer)
+    const bx=W-95, by=H-120, bw=85, bh=55;
+    ctx.fillStyle='rgba(0,0,0,0.75)';
+    ctx.beginPath(); ctx.roundRect(bx,by,bw,bh,10); ctx.fill();
+    ctx.strokeStyle=this.game.autoBattle?'#2ecc71':'#e74c3c';
+    ctx.lineWidth=2;
+    ctx.beginPath(); ctx.roundRect(bx,by,bw,bh,10); ctx.stroke();
+    ctx.lineWidth=1;
     ctx.fillStyle=this.game.autoBattle?'#2ecc71':'#e74c3c';
-    ctx.font='bold 9px monospace'; ctx.textAlign='center';
-    ctx.fillText(this.game.autoBattle?'AUTO ON':'AUTO OFF', W-48, H-82);
-    ctx.fillStyle='#94a3b8'; ctx.font='8px monospace';
-    ctx.fillText(`Speed ${this.game.battleSpeed}x`, W-48, H-65);
-    this.buttons={autoToggle:{x:W-88,y:H-105,w:80,h:50}};
+    ctx.font='bold 11px monospace'; ctx.textAlign='center';
+    ctx.fillText(this.game.autoBattle?'⚔ AUTO':'✋ TAP', bx+bw/2, by+22);
+    ctx.fillStyle='#f1c40f'; ctx.font='bold 10px monospace';
+    ctx.fillText(`${this.game.battleSpeed}x`, bx+bw/2, by+42);
+    this.buttons={autoToggle:{x:bx,y:by,w:bw,h:bh}};
   }
   drawQuests(ctx, W, H) {
     ctx.fillStyle='#0d1117'; ctx.fillRect(0,0,W,H);
