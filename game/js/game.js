@@ -27,16 +27,20 @@ class Game {
     this.gachaResult = null;
     this.notification = null;
     this.notificationTimer = 0;
-    this.assets = {};
+    this.assets = { bgStage: null, bgHome: null };
     this.loadAssets();
     this.init();
   }
 
   loadAssets() {
-    this.assets.bgStage = new Image();
-    this.assets.bgStage.src = 'assets/bg_stage.png';
-    this.assets.bgHome = new Image();
-    this.assets.bgHome.src = 'assets/bg_home.png';
+    const loadImg = (key, src) => {
+      const img = new Image();
+      img.onload = () => { this.assets[key] = img; };
+      img.onerror = () => { console.warn('Failed to load:', src); };
+      img.src = src;
+    };
+    loadImg('bgStage', 'assets/bg_stage.png');
+    loadImg('bgHome', 'assets/bg_home.png');
   }
 
   init() {
