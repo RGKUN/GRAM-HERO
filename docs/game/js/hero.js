@@ -186,18 +186,21 @@ class Hero {
     ctx.lineWidth = selected ? 2 : 1;
     ctx.strokeRect(x, y, w, h);
     ctx.lineWidth = 1;
-    // Mini character
-    const cx = x+w/2, cy = y+h*0.4;
-    const ms = w*0.25;
-    ctx.fillStyle = this.colors.body;
-    ctx.fillRect(cx-ms*0.3, cy-ms*0.5, ms*0.6, ms*0.4);
-    ctx.fillStyle = this.colors.skin;
-    ctx.fillRect(cx-ms*0.2, cy-ms*0.7, ms*0.4, ms*0.25);
-    ctx.fillStyle = this.colors.hair;
-    ctx.fillRect(cx-ms*0.22, cy-ms*0.73, ms*0.44, ms*0.1);
-    ctx.fillStyle = '#2d3436';
-    ctx.fillRect(cx-ms*0.08, cy-ms*0.55, ms*0.06, ms*0.06);
-    ctx.fillRect(cx+ms*0.04, cy-ms*0.55, ms*0.06, ms*0.06);
+    // Mini character (skip if portrait image used)
+    const hasPortrait = window.game && window.game.assets && window.game.assets[portraitMap[this.classType]];
+    if (!hasPortrait) {
+      const cx = x+w/2, cy = y+h*0.4;
+      const ms = w*0.25;
+      ctx.fillStyle = this.colors.body;
+      ctx.fillRect(cx-ms*0.3, cy-ms*0.5, ms*0.6, ms*0.4);
+      ctx.fillStyle = this.colors.skin;
+      ctx.fillRect(cx-ms*0.2, cy-ms*0.7, ms*0.4, ms*0.25);
+      ctx.fillStyle = this.colors.hair;
+      ctx.fillRect(cx-ms*0.22, cy-ms*0.73, ms*0.44, ms*0.1);
+      ctx.fillStyle = '#2d3436';
+      ctx.fillRect(cx-ms*0.08, cy-ms*0.55, ms*0.06, ms*0.06);
+      ctx.fillRect(cx+ms*0.04, cy-ms*0.55, ms*0.06, ms*0.06);
+    }
     // Name
     ctx.fillStyle = '#e2e8f0';
     ctx.font = `bold ${Math.max(7,w*0.12)}px monospace`;
