@@ -1,0 +1,356 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>GRAM AFK HEROES — Game Design Documentation</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: 'Segoe UI', system-ui, -apple-system, sans-serif; background: #0a0a0f; color: #e0e0e0; min-height: 100vh; }
+    
+    .hero {
+      background: linear-gradient(135deg, #1a0a2e 0%, #16213e 50%, #0f3460 100%);
+      padding: 80px 20px 60px;
+      text-align: center;
+      position: relative;
+      overflow: hidden;
+    }
+    .hero::before {
+      content: '';
+      position: absolute;
+      top: -50%;
+      left: -50%;
+      width: 200%;
+      height: 200%;
+      background: radial-gradient(circle, rgba(139,92,246,0.1) 0%, transparent 50%);
+      animation: pulse 8s ease-in-out infinite;
+    }
+    @keyframes pulse {
+      0%, 100% { transform: scale(1); }
+      50% { transform: scale(1.1); }
+    }
+    .hero h1 {
+      font-size: clamp(2rem, 5vw, 3.5rem);
+      font-weight: 800;
+      background: linear-gradient(135deg, #a78bfa, #60a5fa, #34d399);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      position: relative;
+      z-index: 1;
+    }
+    .hero .subtitle {
+      font-size: clamp(1rem, 2.5vw, 1.3rem);
+      color: #94a3b8;
+      margin-top: 12px;
+      position: relative;
+      z-index: 1;
+    }
+    .hero .badges {
+      margin-top: 24px;
+      display: flex;
+      justify-content: center;
+      gap: 10px;
+      flex-wrap: wrap;
+      position: relative;
+      z-index: 1;
+    }
+    .badge {
+      padding: 6px 16px;
+      border-radius: 20px;
+      font-size: 0.8rem;
+      font-weight: 600;
+      border: 1px solid rgba(255,255,255,0.15);
+      background: rgba(255,255,255,0.05);
+      backdrop-filter: blur(10px);
+    }
+    .badge.pixel { border-color: #a78bfa; color: #a78bfa; }
+    .badge.tg { border-color: #60a5fa; color: #60a5fa; }
+    .badge.pve { border-color: #34d399; color: #34d399; }
+    .badge.afk { border-color: #fbbf24; color: #fbbf24; }
+
+    .container { max-width: 1100px; margin: 0 auto; padding: 40px 20px; }
+
+    .section-title {
+      font-size: 1.5rem;
+      font-weight: 700;
+      margin-bottom: 24px;
+      color: #e2e8f0;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .section-title .icon { font-size: 1.3rem; }
+
+    .vision-card {
+      background: linear-gradient(135deg, rgba(139,92,246,0.1), rgba(96,165,250,0.1));
+      border: 1px solid rgba(139,92,246,0.3);
+      border-radius: 16px;
+      padding: 32px;
+      margin-bottom: 40px;
+    }
+    .vision-card p {
+      font-size: 1.1rem;
+      line-height: 1.7;
+      color: #cbd5e1;
+    }
+    .vision-card strong { color: #a78bfa; }
+
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+      gap: 16px;
+      margin-bottom: 40px;
+    }
+    .stat-card {
+      background: rgba(255,255,255,0.03);
+      border: 1px solid rgba(255,255,255,0.08);
+      border-radius: 12px;
+      padding: 20px 16px;
+      text-align: center;
+    }
+    .stat-card .number {
+      font-size: 2rem;
+      font-weight: 800;
+      background: linear-gradient(135deg, #a78bfa, #60a5fa);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+    .stat-card .label {
+      font-size: 0.8rem;
+      color: #94a3b8;
+      margin-top: 4px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .phases-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+      gap: 16px;
+      margin-bottom: 40px;
+    }
+    .phase-card {
+      background: rgba(255,255,255,0.03);
+      border: 1px solid rgba(255,255,255,0.08);
+      border-radius: 12px;
+      padding: 24px;
+      transition: all 0.3s ease;
+      cursor: pointer;
+      text-decoration: none;
+      color: inherit;
+      display: block;
+    }
+    .phase-card:hover {
+      border-color: rgba(139,92,246,0.5);
+      transform: translateY(-2px);
+      box-shadow: 0 8px 30px rgba(139,92,246,0.15);
+    }
+    .phase-card .phase-num {
+      font-size: 0.75rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      margin-bottom: 8px;
+    }
+    .phase-card .phase-num.p1 { color: #a78bfa; }
+    .phase-card .phase-num.p2 { color: #60a5fa; }
+    .phase-card .phase-num.p4 { color: #34d399; }
+    .phase-card .phase-num.p5 { color: #fbbf24; }
+    .phase-card .phase-num.p6 { color: #f87171; }
+    .phase-card .phase-num.p7 { color: #fb923c; }
+    .phase-card .phase-num.p8 { color: #2dd4bf; }
+    .phase-card .phase-num.p9 { color: #c084fc; }
+    .phase-card .phase-num.p10 { color: #94a3b8; }
+    .phase-card h3 {
+      font-size: 1.05rem;
+      margin-bottom: 8px;
+      color: #e2e8f0;
+    }
+    .phase-card p {
+      font-size: 0.85rem;
+      color: #94a3b8;
+      line-height: 1.5;
+    }
+    .phase-card .tags {
+      margin-top: 12px;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+    }
+    .phase-card .tag {
+      font-size: 0.7rem;
+      padding: 3px 10px;
+      border-radius: 10px;
+      background: rgba(255,255,255,0.06);
+      color: #94a3b8;
+    }
+
+    .flow-section { margin-bottom: 40px; }
+    .flow-container {
+      display: flex;
+      align-items: center;
+      gap: 0;
+      overflow-x: auto;
+      padding: 20px 0;
+      justify-content: center;
+      flex-wrap: wrap;
+    }
+    .flow-node {
+      background: rgba(139,92,246,0.1);
+      border: 1px solid rgba(139,92,246,0.3);
+      border-radius: 10px;
+      padding: 12px 18px;
+      text-align: center;
+      min-width: 100px;
+      font-size: 0.8rem;
+      font-weight: 600;
+      color: #e2e8f0;
+    }
+    .flow-arrow {
+      color: #475569;
+      font-size: 1.2rem;
+      padding: 0 8px;
+    }
+
+    .footer {
+      text-align: center;
+      padding: 40px 20px;
+      border-top: 1px solid rgba(255,255,255,0.05);
+      color: #475569;
+      font-size: 0.85rem;
+    }
+    .footer a { color: #a78bfa; text-decoration: none; }
+  </style>
+</head>
+<body>
+
+  <div class="hero">
+    <h1>⚔️ GRAM AFK HEROES</h1>
+    <p class="subtitle">Pixel RPG × Telegram Mini App × Auto Battle × Hero Collectible</p>
+    <div class="badges">
+      <span class="badge pixel">🎮 Pixel RPG</span>
+      <span class="badge tg">📱 Telegram Mini App</span>
+      <span class="badge pve">⚔️ PvE Focused</span>
+      <span class="badge afk">💤 AFK Auto Battle</span>
+    </div>
+  </div>
+
+  <div class="container">
+
+    <!-- Vision -->
+    <div class="vision-card">
+      <p><strong>Game Vision:</strong> "Mudah dimainkan, cocok untuk sesi singkat maupun AFK, tetapi memiliki progression dan collectible system yang membuat pemain ingin terus berkembang."</p>
+    </div>
+
+    <!-- Stats -->
+    <div class="section-title"><span class="icon">📊</span> Documentation Overview</div>
+    <div class="stats-grid">
+      <div class="stat-card"><div class="number">10</div><div class="label">Phases</div></div>
+      <div class="stat-card"><div class="number">9</div><div class="label">Documents</div></div>
+      <div class="stat-card"><div class="number">5.6K+</div><div class="label">Lines</div></div>
+      <div class="stat-card"><div class="number">4</div><div class="label">Hero Classes</div></div>
+      <div class="stat-card"><div class="number">15</div><div class="label">Bosses</div></div>
+      <div class="stat-card"><div class="number">5</div><div class="label">Rarities</div></div>
+    </div>
+
+    <!-- Core Loop -->
+    <div class="flow-section">
+      <div class="section-title"><span class="icon">🔄</span> Core Gameplay Loop</div>
+      <div class="flow-container">
+        <div class="flow-node">⚔️ Battle</div>
+        <span class="flow-arrow">→</span>
+        <div class="flow-node">👾 Koroco</div>
+        <span class="flow-arrow">→</span>
+        <div class="flow-node">🏆 Boss</div>
+        <span class="flow-arrow">→</span>
+        <div class="flow-node">💰 Reward</div>
+        <span class="flow-arrow">→</span>
+        <div class="flow-node">⬆️ Upgrade</div>
+        <span class="flow-arrow">→</span>
+        <div class="flow-node">🎰 Gacha</div>
+        <span class="flow-arrow">→</span>
+        <div class="flow-node">📦 Collection</div>
+        <span class="flow-arrow">→</span>
+        <div class="flow-node">♻️ Repeat</div>
+      </div>
+    </div>
+
+    <!-- Phases -->
+    <div class="section-title"><span class="icon">📋</span> Development Phases</div>
+    <div class="phases-grid">
+
+      <a class="phase-card" href="../GRAM_AFK_HEROES_CORE_GAME_FOUNDATION.md" target="_blank">
+        <div class="phase-num p1">Phase 1</div>
+        <h3>Core Game Foundation</h3>
+        <p>Game vision, core loop, battle system, hero/monster/boss architecture, currency, progression flow.</p>
+        <div class="tags"><span class="tag">Game Loop</span><span class="tag">Battle</span><span class="tag">Heroes</span><span class="tag">Boss</span></div>
+      </a>
+
+      <a class="phase-card" href="../GRAM_AFK_HEROES_HERO_SYSTEM_V1.md" target="_blank">
+        <div class="phase-num p2">Phase 2</div>
+        <h3>Hero System</h3>
+        <p>Class identity, stats 1-100, star system, rarity, skills, energy, auto battle AI, damage formula.</p>
+        <div class="tags"><span class="tag">Classes</span><span class="tag">Stats</span><span class="tag">Star</span><span class="tag">Skills</span><span class="tag">Damage</span></div>
+      </a>
+
+      <a class="phase-card" href="../GRAM_AFK_HEROES_PROGRESSION_GACHA_SYSTEM_V1.md" target="_blank">
+        <div class="phase-num p4">Phase 4</div>
+        <h3>Progression & Gacha</h3>
+        <p>Player/hero level, star progression, gold/diamond economy, hero gacha, pity system, F2P progression.</p>
+        <div class="tags"><span class="tag">Economy</span><span class="tag">Gacha</span><span class="tag">Pity</span><span class="tag">F2P</span><span class="tag">AFK Reward</span></div>
+      </a>
+
+      <a class="phase-card" href="../GRAM_AFK_HEROES_UI_UX_SYSTEM_V1.md" target="_blank">
+        <div class="phase-num p5">Phase 5</div>
+        <h3>UI/UX System</h3>
+        <p>Screen architecture, navigation, battle UI, hero UI, gacha UI, responsive design, component architecture.</p>
+        <div class="tags"><span class="tag">UI</span><span class="tag">Navigation</span><span class="tag">Battle Screen</span><span class="tag">Responsive</span></div>
+      </a>
+
+      <a class="phase-card" href="../GRAM_AFK_HEROES_BACKEND_DATA_ARCHITECTURE_V1.md" target="_blank">
+        <div class="phase-num p6">Phase 6</div>
+        <h3>Backend & Data</h3>
+        <p>Data architecture, save/load, server-authoritative, anti-cheat, database, idempotency, security.</p>
+        <div class="tags"><span class="tag">Server</span><span class="tag">Database</span><span class="tag">Security</span><span class="tag">Anti-Cheat</span></div>
+      </a>
+
+      <a class="phase-card" href="../GRAM_AFK_HEROES_QUEST_RETENTION_SYSTEM_V1.md" target="_blank">
+        <div class="phase-num p7">Phase 7</div>
+        <h3>Quest & Retention</h3>
+        <p>Daily quest, achievement, login reward, weekly milestone, event system, retention design.</p>
+        <div class="tags"><span class="tag">Quest</span><span class="tag">Achievement</span><span class="tag">Login</span><span class="tag">Retention</span></div>
+      </a>
+
+      <a class="phase-card" href="../GRAM_AFK_HEROES_EQUIPMENT_ITEM_SYSTEM_V1.md" target="_blank">
+        <div class="phase-num p8">Phase 8</div>
+        <h3>Equipment & Items</h3>
+        <p>Equipment slots, stats, rarity, upgrade, drop table, inventory, stat calculation, class restriction.</p>
+        <div class="tags"><span class="tag">Equipment</span><span class="tag">Inventory</span><span class="tag">Upgrade</span><span class="tag">Drop</span></div>
+      </a>
+
+      <a class="phase-card" href="../GRAM_AFK_HEROES_AUDIO_VFX_FEEDBACK_SYSTEM_V1.md" target="_blank">
+        <div class="phase-num p9">Phase 9</div>
+        <h3>Audio, VFX & Feedback</h3>
+        <p>Audio manager, BGM, SFX, VFX, damage numbers, hit effects, boss effects, pooling, performance.</p>
+        <div class="tags"><span class="tag">Audio</span><span class="tag">VFX</span><span class="tag">Feedback</span><span class="tag">Pool</span></div>
+      </a>
+
+      <a class="phase-card" href="../GRAM_AFK_HEROES_QA_POLISH_RELEASE_V1.md" target="_blank">
+        <div class="phase-num p10">Phase 10</div>
+        <h3>QA & Release Prep</h3>
+        <p>Bug classification, full gameplay test, economy QA, anti-exploit, performance, release checklist.</p>
+        <div class="tags"><span class="tag">QA</span><span class="tag">Testing</span><span class="tag">Performance</span><span class="tag">Release</span></div>
+      </a>
+
+    </div>
+
+    <!-- Footer -->
+    <div class="footer">
+      <p>GRAM AFK HEROES — Game Design Documentation v1.0</p>
+      <p style="margin-top: 8px;">Built with <a href="https://github.com/RGKUN/GRAM-HERO">Gram AFK Heroes</a> | Phase 1-10 Complete</p>
+    </div>
+
+  </div>
+
+</body>
+</html>
