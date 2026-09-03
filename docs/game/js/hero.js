@@ -1,72 +1,44 @@
-// GRAM AFK HEROES - Hero System
-
 class Hero {
-  constructor(classType, rarity = 'COMMON', level = 1, star = 1) {
+  constructor(classType, rarity='COMMON', level=1, star=1) {
     this.id = Utils.generateUUID();
     this.classType = classType;
     const base = CONFIG.heroClasses[classType];
     this.name = base.name;
     this.role = base.role;
     this.position = base.position;
-    this.color = base.color;
+    this.colors = base.colors;
     this.rarity = rarity;
     this.level = level;
     this.star = star;
     this.xp = 0;
-    this.skills = Utils.deepClone(base.skills);
+    this.skills = JSON.parse(JSON.stringify(base.skills));
     this.energy = 0;
-    this.hp = 0;
-    this.maxHp = 0;
-    this.shield = 0;
-    this.defBuff = 0;
+    this.hp = 0; this.maxHp = 0; this.shield = 0; this.defBuff = 0;
     this.cooldowns = [0, 0, 0];
     this.isAlive = true;
-    this.equipment = { WEAPON: null, ARMOR: null, HELMET: null, ACCESSORY: null };
+    this.animFrame = 0;
+    this.animTimer = 0;
+    this.hitFlash = 0;
+    this.healFlash = 0;
+    this.equipment = {};
     this.calcStats();
     this.hp = this.maxHp;
   }
-
   calcStats() {
-    const base = CONFIG.heroClasses[this.classType].baseStats;
-    const rarityMul = RARITY[this.rarity].multiplier;
-    const levelMul = 1 + (this.level - 1) * this.getGrowthRate();
-    const starMul = 1 + (this.star - 1) * 0.15;
-    const eqBonus = this.getEquipmentBonus();
-
-    this.maxHp = Math.floor(base.hp * rarityMul * levelMul * starMul * starMul + eqBonus.hp);
-    this.atk = Math.floor(base.atk * rarityMul * levelMul * starMul + eqBonus.atk);
-    this.def = Math.floor(base.def * rarityMul * levelMul * starMul + eqBonus.def);
-    this.spd = Math.floor(base.spd * rarityMul * (1 + (this.level - 1) * 0.008) + eqBonus.spd);
-    this.critRate = base.critRate + (this.star - 1) * 2 + eqBonus.critRate;
-    this.critDmg = base.critDmg + (this.star - 1) * 0.1;
-    this.skillPower = Math.floor(base.skillPower * rarityMul * levelMul * starMul);
-    this.healPower = Math.floor(base.healPower * rarityMul * levelMul * starMul);
+    const b = CONFIG.heroClasses[this.classType].baseStats;
+    const rm = RARITY[this.rarity].multiplier;
+    const lm = 1 + (this.level-1) * 0.025;
+    const sm = 1 + (this.star-1) * 0.15;
+    this.maxHp = Math.floor(b.hp * rm * lm * sm * sm);
+    this.atk = Math.floor(b.atk * rm * lm * sm);
+    this.def = Math.floor(b.def * rm * lm * sm);
+    this.spd = Math.floor(b.spd * rm * (1 + (this.level-1)*0.008));
+    this.critRate = b.critRate + (this.star-1)*2;
+    this.critDmg = b.critDmg + (this.star-1)*0.1;
+    this.skillPower = Math.floor(b.skillPower * rm * lm * sm);
+    this.healPower = Math.floor(b.healPower * rm * lm * sm);
   }
-
-  getGrowthRate() {
-    const rates = { SWORDMAN: 0.025, TANK: 0.03, MAGE: 0.022, HEALER: 0.024 };
-    return rates[this.classType] || 0.025;
-  }
-
-  getEquipmentBonus() {
-    const bonus = { hp: 0, atk: 0, def: 0, spd: 0, critRate: 0 };
-    for (const slot of Object.values(this.equipment)) {
-      if (slot) {
-        const rarityMul = RARITY[slot.rarity].multiplier;
-        bonus.hp += Math.floor(slot.baseHp * rarityMul * (1 + (slot.level - 1) * 0.05));
-        bonus.atk += Math.floor(slot.baseAtk * rarityMul * (1 + (slot.level - 1) * 0.05));
-        bonus.def += Math.floor(slot.baseDef * rarityMul * (1 + (slot.level - 1) * 0.05));
-        bonus.spd += Math.floor((slot.baseSpd || 0) * rarityMul);
-        bonus.critRate += (slot.bonusCrit || 0);
-      }
-    }
-    return bonus;
-  }
-
-  getLevelUpXp() {
-    return Math.floor(100 + this.level * 50 + Math.pow(this.level, 1.8));
-  }
-
+  getLevelUpXp() { return Math.floor(100 + this.level * 50 + Math.pow(this.level, 1.8)); }
   addXp(amount) {
     this.xp += amount;
     const results = [];
@@ -74,140 +46,154 @@ class Hero {
       this.xp -= this.getLevelUpXp();
       this.level++;
       this.calcStats();
-      this.hp = Math.min(this.hp + Math.floor(this.maxHp * 0.1), this.maxHp);
-      results.push({ type: 'LEVEL_UP', hero: this.name, level: this.level });
+      this.hp = Math.min(this.hp + Math.floor(this.maxHp*0.1), this.maxHp);
+      results.push({ type:'LEVEL_UP', hero:this.name, level:this.level });
     }
     return results;
   }
-
   takeDamage(dmg) {
     const mitigated = Math.max(1, Math.floor(dmg * 100 / (100 + this.def + this.defBuff)));
+    this.hitFlash = 8;
     if (this.shield > 0) {
       const absorbed = Math.min(this.shield, mitigated);
       this.shield -= absorbed;
       return Math.max(0, mitigated - absorbed);
     }
     this.hp -= mitigated;
-    if (this.hp <= 0) {
-      this.hp = 0;
-      this.isAlive = false;
-    }
+    if (this.hp <= 0) { this.hp = 0; this.isAlive = false; }
     return mitigated;
   }
-
   heal(amount) {
     if (!this.isAlive) return 0;
     const healed = Math.min(amount, this.maxHp - this.hp);
     this.hp += healed;
+    this.healFlash = 10;
     return healed;
   }
-
-  addEnergy(amount) {
-    this.energy = Math.min(100, this.energy + amount);
-  }
-
-  useEnergy() {
-    if (this.energy >= 100) {
-      this.energy = 0;
-      return true;
-    }
-    return false;
-  }
-
-  tickCooldowns() {
-    for (let i = 0; i < this.cooldowns.length; i++) {
-      if (this.cooldowns[i] > 0) this.cooldowns[i]--;
-    }
-  }
-
-  canUseSkill(index) {
-    return this.skills[index] && this.cooldowns[index] === 0 && this.isAlive;
-  }
-
-  useSkill(index) {
-    if (!this.canUseSkill(index)) return null;
-    const skill = this.skills[index];
-    this.cooldowns[index] = skill.cooldown;
-    return skill;
-  }
+  addEnergy(a) { this.energy = Math.min(100, this.energy + a); }
+  useEnergy() { if (this.energy >= 100) { this.energy = 0; return true; } return false; }
+  tickCooldowns() { for (let i=0;i<3;i++) if (this.cooldowns[i]>0) this.cooldowns[i]--; }
+  canUseSkill(i) { return this.skills[i] && this.cooldowns[i]===0 && this.isAlive; }
+  useSkill(i) { if (!this.canUseSkill(i)) return null; const s=this.skills[i]; this.cooldowns[i]=s.cooldown; return s; }
 
   draw(ctx, x, y, size) {
     if (!this.isAlive) return;
     const s = size;
+    this.animTimer++;
+    if (this.animTimer % 20 === 0) this.animFrame = (this.animFrame + 1) % 2;
+    const bobY = this.animFrame === 0 ? 0 : -2;
+    const c = this.colors;
+
+    // Shadow
+    ctx.fillStyle = 'rgba(0,0,0,0.4)';
+    ctx.beginPath();
+    ctx.ellipse(x, y+4, s*0.4, s*0.1, 0, 0, Math.PI*2);
+    ctx.fill();
 
     // Body
-    ctx.fillStyle = this.color;
-    ctx.fillRect(x - s/2, y - s, s, s);
-
-    // Front/Back indicator
-    if (this.position === 'FRONT') {
-      ctx.fillStyle = Utils.hexToRgba(this.color, 0.3);
-      ctx.fillRect(x - s/2 - 4, y - s + 4, s + 8, s - 8);
+    ctx.fillStyle = c.body;
+    ctx.fillRect(x-s*0.3, y-s*0.9+bobY, s*0.6, s*0.5);
+    // Accent
+    ctx.fillStyle = c.accent;
+    ctx.fillRect(x-s*0.3, y-s*0.45+bobY, s*0.6, s*0.15);
+    // Head
+    ctx.fillStyle = c.skin;
+    ctx.fillRect(x-s*0.2, y-s*1.15+bobY, s*0.4, s*0.3);
+    // Hair
+    ctx.fillStyle = c.hair;
+    ctx.fillRect(x-s*0.22, y-s*1.18+bobY, s*0.44, s*0.12);
+    // Eyes
+    ctx.fillStyle = '#2d3436';
+    ctx.fillRect(x-s*0.1, y-s*0.95+bobY, s*0.08, s*0.08);
+    ctx.fillRect(x+s*0.05, y-s*0.95+bobY, s*0.08, s*0.08);
+    // Weapon
+    ctx.fillStyle = c.weapon;
+    if (this.classType === 'SWORDMAN') {
+      ctx.fillRect(x+s*0.3, y-s*0.8+bobY, s*0.06, s*0.5);
+      ctx.fillRect(x+s*0.25, y-s*0.85+bobY, s*0.16, s*0.06);
+    } else if (this.classType === 'TANK') {
+      ctx.fillRect(x+s*0.25, y-s*0.7+bobY, s*0.25, s*0.35);
+      ctx.fillStyle = '#7f8c8d';
+      ctx.fillRect(x+s*0.27, y-s*0.68+bobY, s*0.21, s*0.31);
+    } else if (this.classType === 'MAGE') {
+      ctx.fillRect(x+s*0.25, y-s*0.9+bobY, s*0.06, s*0.55);
+      ctx.fillStyle = '#f1c40f';
+      ctx.beginPath();
+      ctx.arc(x+s*0.28, y-s*0.95+bobY, s*0.08, 0, Math.PI*2);
+      ctx.fill();
+    } else {
+      ctx.fillRect(x+s*0.25, y-s*0.8+bobY, s*0.2, s*0.08);
+      ctx.fillStyle = '#f1c40f';
+      ctx.beginPath();
+      ctx.arc(x+s*0.35, y-s*0.84+bobY, s*0.06, 0, Math.PI*2);
+      ctx.fill();
     }
-
-    // Class icon (pixel art)
-    ctx.fillStyle = '#fff';
-    ctx.font = `${s * 0.3}px monospace`;
-    ctx.textAlign = 'center';
-    const icons = { SWORDMAN: '⚔', TANK: '🛡', MAGE: '🔮', HEALER: '💚' };
-    ctx.fillText(icons[this.classType] || '?', x, y - s * 0.4);
-
+    // Hit flash
+    if (this.hitFlash > 0) {
+      ctx.fillStyle = `rgba(255,255,255,${this.hitFlash/8*0.5})`;
+      ctx.fillRect(x-s*0.3, y-s*1.15+bobY, s*0.6, s*1.2);
+      this.hitFlash--;
+    }
+    // Heal flash
+    if (this.healFlash > 0) {
+      ctx.fillStyle = `rgba(46,204,113,${this.healFlash/10*0.3})`;
+      ctx.fillRect(x-s*0.3, y-s*1.15+bobY, s*0.6, s*1.2);
+      this.healFlash--;
+    }
     // HP bar
-    const barW = s;
-    const barH = 6;
-    const barX = x - barW/2;
-    const barY = y - s - 10;
+    const bw = s*0.7, bh = 5;
+    const bx = x - bw/2, by = y - s*1.25;
+    ctx.fillStyle = '#1a1a2e';
+    ctx.fillRect(bx-1, by-1, bw+2, bh+2);
     ctx.fillStyle = '#333';
-    ctx.fillRect(barX, barY, barW, barH);
-    const hpPct = this.hp / this.maxHp;
-    ctx.fillStyle = hpPct > 0.5 ? '#2ecc71' : hpPct > 0.25 ? '#f39c12' : '#e74c3c';
-    ctx.fillRect(barX, barY, barW * hpPct, barH);
-
+    ctx.fillRect(bx, by, bw, bh);
+    const hp = this.hp/this.maxHp;
+    ctx.fillStyle = hp>0.5 ? '#2ecc71' : hp>0.25 ? '#f39c12' : '#e74c3c';
+    ctx.fillRect(bx, by, bw*hp, bh);
     // Energy bar
-    const eBarY = barY + barH + 2;
+    const ey = by+bh+1;
     ctx.fillStyle = '#222';
-    ctx.fillRect(barX, eBarY, barW, 3);
+    ctx.fillRect(bx, ey, bw, 2);
     ctx.fillStyle = '#f1c40f';
-    ctx.fillRect(barX, eBarY, barW * (this.energy / 100), 3);
-
-    // Name + Level
-    ctx.fillStyle = '#fff';
-    ctx.font = '10px monospace';
-    ctx.textAlign = 'center';
-    ctx.fillText(`${this.name} Lv${this.level}`, x, y + 12);
-
-    // Shield indicator
-    if (this.shield > 0) {
-      ctx.fillStyle = '#3498db';
-      ctx.font = '10px monospace';
-      ctx.fillText(`🛡${this.shield}`, x, y + 24);
-    }
-  }
-
-  drawPortrait(ctx, x, y, w, h) {
-    // Background
-    ctx.fillStyle = Utils.hexToRgba(this.color, 0.3);
-    ctx.fillRect(x, y, w, h);
-    ctx.strokeStyle = RARITY[this.rarity].color;
-    ctx.lineWidth = 2;
-    ctx.strokeRect(x, y, w, h);
-
-    // Icon
-    ctx.fillStyle = this.color;
-    ctx.font = `${w * 0.4}px monospace`;
-    ctx.textAlign = 'center';
-    const icons = { SWORDMAN: '⚔', TANK: '🛡', MAGE: '🔮', HEALER: '💚' };
-    ctx.fillText(icons[this.classType], x + w/2, y + h * 0.45);
-
-    // Name
-    ctx.fillStyle = '#fff';
-    ctx.font = '9px monospace';
-    ctx.fillText(this.name, x + w/2, y + h * 0.7);
-    ctx.fillText(`Lv${this.level}`, x + w/2, y + h * 0.85);
-
+    ctx.fillRect(bx, ey, bw*(this.energy/100), 2);
     // Star
     ctx.fillStyle = '#f1c40f';
-    ctx.font = '8px monospace';
-    ctx.fillText('★'.repeat(this.star), x + w/2, y + h - 4);
+    ctx.font = `${Math.max(6,s*0.15)}px monospace`;
+    ctx.textAlign = 'center';
+    ctx.fillText('★'.repeat(this.star), x, y+14);
+  }
+
+  drawPortrait(ctx, x, y, w, h, selected=false) {
+    const bg = ctx.createLinearGradient(x, y, x, y+h);
+    bg.addColorStop(0, Utils.hexToRgba(this.colors.body, 0.4));
+    bg.addColorStop(1, Utils.hexToRgba(this.colors.body, 0.1));
+    ctx.fillStyle = bg;
+    ctx.fillRect(x, y, w, h);
+    // Border
+    ctx.strokeStyle = selected ? RARITY[this.rarity].color : Utils.hexToRgba(RARITY[this.rarity].color, 0.5);
+    ctx.lineWidth = selected ? 2 : 1;
+    ctx.strokeRect(x, y, w, h);
+    ctx.lineWidth = 1;
+    // Mini character
+    const cx = x+w/2, cy = y+h*0.4;
+    const ms = w*0.25;
+    ctx.fillStyle = this.colors.body;
+    ctx.fillRect(cx-ms*0.3, cy-ms*0.5, ms*0.6, ms*0.4);
+    ctx.fillStyle = this.colors.skin;
+    ctx.fillRect(cx-ms*0.2, cy-ms*0.7, ms*0.4, ms*0.25);
+    ctx.fillStyle = this.colors.hair;
+    ctx.fillRect(cx-ms*0.22, cy-ms*0.73, ms*0.44, ms*0.1);
+    ctx.fillStyle = '#2d3436';
+    ctx.fillRect(cx-ms*0.08, cy-ms*0.55, ms*0.06, ms*0.06);
+    ctx.fillRect(cx+ms*0.04, cy-ms*0.55, ms*0.06, ms*0.06);
+    // Name
+    ctx.fillStyle = '#e2e8f0';
+    ctx.font = `bold ${Math.max(7,w*0.12)}px monospace`;
+    ctx.textAlign = 'center';
+    ctx.fillText(this.name, x+w/2, y+h*0.72);
+    ctx.fillStyle = RARITY[this.rarity].color;
+    ctx.font = `${Math.max(6,w*0.1)}px monospace`;
+    ctx.fillText(`Lv${this.level}`, x+w/2, y+h*0.85);
+    ctx.fillText('★'.repeat(this.star), x+w/2, y+h*0.95);
   }
 }
