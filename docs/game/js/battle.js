@@ -1,7 +1,14 @@
 class BattleSystem {
   playSfx(key) {
-    const g=window.game;
-    if(g&&g.sfx&&g.sfx[key]) { const a=g.sfx[key]; a.currentTime=0; a.play().catch(()=>{}); }
+    try {
+      const g=window.game;
+      if(g&&g.sfx&&g.sfx[key]) {
+        const a=g.sfx[key];
+        a.currentTime=0;
+        const p=a.play();
+        if(p&&p.catch) p.catch(()=>{});
+      }
+    } catch(e) {}
   }
   constructor(party, stage, bossIndex) {
     this.party = party.filter(h=>h.isAlive);
