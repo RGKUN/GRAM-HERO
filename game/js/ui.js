@@ -12,8 +12,12 @@ class UIManager {
   }
 
   drawHome(ctx, W, H) {
-    ctx.fillStyle = '#0a0a1a';
-    ctx.fillRect(0, 0, W, H);
+    if (window.game && window.game.assets && window.game.assets.bgHome && window.game.assets.bgHome.complete) {
+      ctx.drawImage(window.game.assets.bgHome, 0, 0, W, H);
+    } else {
+      ctx.fillStyle = "#0a0a1a";
+      ctx.fillRect(0, 0, W, H);
+    }
 
     // Header
     ctx.strokeStyle = '#a78bfa';

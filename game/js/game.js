@@ -27,7 +27,16 @@ class Game {
     this.gachaResult = null;
     this.notification = null;
     this.notificationTimer = 0;
+    this.assets = {};
+    this.loadAssets();
     this.init();
+  }
+
+  loadAssets() {
+    this.assets.bgStage = new Image();
+    this.assets.bgStage.src = 'assets/bg_stage.png';
+    this.assets.bgHome = new Image();
+    this.assets.bgHome.src = 'assets/bg_home.png';
   }
 
   init() {
