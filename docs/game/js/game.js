@@ -18,7 +18,7 @@ class Game {
     this.init();
   }
   loadAssets() {
-    const imgs={bgHome:'assets/bg_home.png',bgStage:'assets/bg_stage.png'};
+    const imgs={bgHome:'assets/bg_home.png',bgStage:'assets/bg_stage.png',portraitSwordman:'assets/portrait_swordman.jpg'};
     for(const[k,v] of Object.entries(imgs)){
       const img=new Image();
       img.onload=((key,img)=>()=>{this.assets[key]=img;console.log('[ASSETS] Loaded:'+key);})(k,img);

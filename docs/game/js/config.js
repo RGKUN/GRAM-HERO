@@ -2,7 +2,7 @@ const CONFIG = {
   player: { maxParty: 3, startGold: 500, startDiamond: 100 },
   heroClasses: {
     SWORDMAN: {
-      name: 'Swordman', role: 'DPS', position: 'FRONT',
+      name: 'Arthur', role: 'DPS', position: 'FRONT',
       colors: { body: '#e74c3c', accent: '#c0392b', weapon: '#bdc3c7', hair: '#f39c12', skin: '#fad6a5' },
       baseStats: { hp: 800, atk: 150, def: 50, spd: 120, critRate: 5, critDmg: 1.5, skillPower: 100, healPower: 80 },
       skills: [

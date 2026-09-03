@@ -164,11 +164,23 @@ class Hero {
   }
 
   drawPortrait(ctx, x, y, w, h, selected=false) {
-    const bg = ctx.createLinearGradient(x, y, x, y+h);
-    bg.addColorStop(0, Utils.hexToRgba(this.colors.body, 0.4));
-    bg.addColorStop(1, Utils.hexToRgba(this.colors.body, 0.1));
-    ctx.fillStyle = bg;
-    ctx.fillRect(x, y, w, h);
+    // Try to use portrait image
+    const portraitMap = {SWORDMAN:'portraitSwordman'};
+    const assetKey = portraitMap[this.classType];
+    if (window.game && window.game.assets && window.game.assets[assetKey]) {
+      ctx.save();
+      ctx.beginPath();
+      ctx.roundRect(x, y, w, h, 6);
+      ctx.clip();
+      ctx.drawImage(window.game.assets[assetKey], x, y, w, h);
+      ctx.restore();
+    } else {
+      const bg = ctx.createLinearGradient(x, y, x, y+h);
+      bg.addColorStop(0, Utils.hexToRgba(this.colors.body, 0.4));
+      bg.addColorStop(1, Utils.hexToRgba(this.colors.body, 0.1));
+      ctx.fillStyle = bg;
+      ctx.fillRect(x, y, w, h);
+    }
     // Border
     ctx.strokeStyle = selected ? RARITY[this.rarity].color : Utils.hexToRgba(RARITY[this.rarity].color, 0.5);
     ctx.lineWidth = selected ? 2 : 1;
