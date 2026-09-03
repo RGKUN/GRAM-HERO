@@ -12,8 +12,10 @@ class UIManager {
   }
 
   drawHome(ctx, W, H) {
-    if (this.game.assets.bgHome) {
-      ctx.drawImage(this.game.assets.bgHome, 0, 0, W, H);
+    if (typeof ASSETS !== "undefined" && ASSETS.bgHome) {
+      ctx.drawImage(ASSETS.bgHome, 0, 0, W, H);
+      ctx.fillStyle = "rgba(0,0,0,0.55)";
+      ctx.fillRect(0, 0, W, H);
     } else {
       ctx.fillStyle = "#0a0a1a";
       ctx.fillRect(0, 0, W, H);

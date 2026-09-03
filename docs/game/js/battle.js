@@ -298,6 +298,8 @@ class BattleSystem {
     // Clear
     if (typeof ASSETS !== "undefined" && ASSETS.bgStage) {
       ctx.drawImage(ASSETS.bgStage, 0, 0, W, H);
+      ctx.fillStyle = "rgba(0,0,0,0.45)";
+      ctx.fillRect(0, 0, W, H);
     } else {
       ctx.fillStyle = "#0a0a1a";
       ctx.fillRect(0, 0, W, H);
