@@ -164,15 +164,17 @@ class Hero {
   }
 
   drawPortrait(ctx, x, y, w, h, selected=false) {
-    // Try to use portrait image
-    const portraitMap = {SWORDMAN:'portraitSwordman'};
-    const assetKey = portraitMap[this.classType];
-    if (window.game && window.game.assets && window.game.assets[assetKey]) {
+    const _g = window.game;
+    const _a = _g && _g.assets;
+    const _p = _a && _a.portraitSwordman;
+    const _isSword = this.classType === 'SWORDMAN';
+    // Background: portrait image or gradient
+    if (_isSword && _p) {
       ctx.save();
       ctx.beginPath();
       ctx.roundRect(x, y, w, h, 6);
       ctx.clip();
-      ctx.drawImage(window.game.assets[assetKey], x, y, w, h);
+      ctx.drawImage(_p, x, y, w, h);
       ctx.restore();
     } else {
       const bg = ctx.createLinearGradient(x, y, x, y+h);
@@ -186,9 +188,8 @@ class Hero {
     ctx.lineWidth = selected ? 2 : 1;
     ctx.strokeRect(x, y, w, h);
     ctx.lineWidth = 1;
-    // Mini character (skip if portrait image used)
-    const hasPortrait = window.game && window.game.assets && window.game.assets[portraitMap[this.classType]];
-    if (!hasPortrait) {
+    // Mini character (only if NO portrait image)
+    if (!(_isSword && _p)) {
       const cx = x+w/2, cy = y+h*0.4;
       const ms = w*0.25;
       ctx.fillStyle = this.colors.body;
