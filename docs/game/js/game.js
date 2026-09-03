@@ -19,6 +19,10 @@ class Game {
   }
   loadAssets() {
     const imgs={bgHome:'assets/bg_home.png',bgStage:'assets/bg_stage.png',portraitSwordman:'assets/portrait_swordman.jpg'};
+    ['idle','walk','attack','hit','death'].forEach(anim => {
+      const count = anim==='attack'?6:anim==='hit'?2:4;
+      for(let i=1;i<=count;i++) imgs['swordman_'+anim+'_'+i]='assets/swordman/'+anim+'_'+String(i).padStart(2,'0')+'.png';
+    });
     for(const[k,v] of Object.entries(imgs)){
       const img=new Image();
       img.onload=((key,img)=>()=>{this.assets[key]=img;console.log('[ASSETS] Loaded:'+key);})(k,img);

@@ -18,6 +18,7 @@ class Hero {
     this.isAlive = true;
     this.animFrame = 0;
     this.animTimer = 0;
+    this.animAction = 'idle';
     this.hitFlash = 0;
     this.healFlash = 0;
     this.equipment = {};
@@ -70,6 +71,8 @@ class Hero {
     this.healFlash = 10;
     return healed;
   }
+  setAction(a) { if (this.animAction !== a) { this.animAction = a; this.animFrame = 0; this.animTimer = 0; } }
+  setFrame(f) { this.animFrame = f; this.animTimer = 0; }
   addEnergy(a) { this.energy = Math.min(100, this.energy + a); }
   useEnergy() { if (this.energy >= 100) { this.energy = 0; return true; } return false; }
   tickCooldowns() { for (let i=0;i<3;i++) if (this.cooldowns[i]>0) this.cooldowns[i]--; }
@@ -77,67 +80,103 @@ class Hero {
   useSkill(i) { if (!this.canUseSkill(i)) return null; const s=this.skills[i]; this.cooldowns[i]=s.cooldown; return s; }
 
   draw(ctx, x, y, size) {
-    if (!this.isAlive) return;
+    if (!this.isAlive) {
+      // Show death sprite then fade
+      if (this.classType === 'SWORDMAN') {
+        const g = window.game && window.game.assets;
+        const frame = Math.min(this.animFrame, 3);
+        const img = g && g['swordman_death_'+(frame+1)];
+        if (img) {
+          const s = size;
+          ctx.globalAlpha = Math.max(0.2, 1 - this.animFrame * 0.2);
+          ctx.drawImage(img, x-s*0.5, y-s*1.2, s, s*1.5);
+          ctx.globalAlpha = 1;
+        }
+      }
+      return;
+    }
     const s = size;
     this.animTimer++;
-    if (this.animTimer % 20 === 0) this.animFrame = (this.animFrame + 1) % 2;
-    const bobY = this.animFrame === 0 ? 0 : -2;
-    const c = this.colors;
 
-    // Shadow
-    ctx.fillStyle = 'rgba(0,0,0,0.4)';
-    ctx.beginPath();
-    ctx.ellipse(x, y+4, s*0.4, s*0.1, 0, 0, Math.PI*2);
-    ctx.fill();
-
-    // Body
-    ctx.fillStyle = c.body;
-    ctx.fillRect(x-s*0.3, y-s*0.9+bobY, s*0.6, s*0.5);
-    // Accent
-    ctx.fillStyle = c.accent;
-    ctx.fillRect(x-s*0.3, y-s*0.45+bobY, s*0.6, s*0.15);
-    // Head
-    ctx.fillStyle = c.skin;
-    ctx.fillRect(x-s*0.2, y-s*1.15+bobY, s*0.4, s*0.3);
-    // Hair
-    ctx.fillStyle = c.hair;
-    ctx.fillRect(x-s*0.22, y-s*1.18+bobY, s*0.44, s*0.12);
-    // Eyes
-    ctx.fillStyle = '#2d3436';
-    ctx.fillRect(x-s*0.1, y-s*0.95+bobY, s*0.08, s*0.08);
-    ctx.fillRect(x+s*0.05, y-s*0.95+bobY, s*0.08, s*0.08);
-    // Weapon
-    ctx.fillStyle = c.weapon;
-    if (this.classType === 'SWORDMAN') {
-      ctx.fillRect(x+s*0.3, y-s*0.8+bobY, s*0.06, s*0.5);
-      ctx.fillRect(x+s*0.25, y-s*0.85+bobY, s*0.16, s*0.06);
-    } else if (this.classType === 'TANK') {
-      ctx.fillRect(x+s*0.25, y-s*0.7+bobY, s*0.25, s*0.35);
-      ctx.fillStyle = '#7f8c8d';
-      ctx.fillRect(x+s*0.27, y-s*0.68+bobY, s*0.21, s*0.31);
-    } else if (this.classType === 'MAGE') {
-      ctx.fillRect(x+s*0.25, y-s*0.9+bobY, s*0.06, s*0.55);
-      ctx.fillStyle = '#f1c40f';
-      ctx.beginPath();
-      ctx.arc(x+s*0.28, y-s*0.95+bobY, s*0.08, 0, Math.PI*2);
-      ctx.fill();
+    // Determine sprite animation
+    const g = window.game && window.game.assets;
+    const hasSprite = this.classType === 'SWORDMAN' && g;
+    if (hasSprite) {
+      // Animation speed: idle 25, walk 12, attack 6, hit 10
+      const speed = this.animAction==='attack'?6:this.animAction==='walk'?12:this.animAction==='hit'?10:25;
+      const maxFrames = this.animAction==='attack'?6:this.animAction==='hit'?2:4;
+      if (this.animTimer % speed === 0) {
+        this.animFrame++;
+        if (this.animAction==='attack' || this.animAction==='hit') {
+          // Play once then return to idle
+          if (this.animFrame >= maxFrames) {
+            this.animAction = 'idle';
+            this.animFrame = 0;
+          }
+        } else {
+          this.animFrame = this.animFrame % maxFrames;
+        }
+      }
+      const img = g['swordman_'+this.animAction+'_'+(this.animFrame+1)];
+      if (img) {
+        // Shadow
+        ctx.fillStyle = 'rgba(0,0,0,0.4)';
+        ctx.beginPath();
+        ctx.ellipse(x, y+4, s*0.4, s*0.1, 0, 0, Math.PI*2);
+        ctx.fill();
+        // Draw sprite
+        ctx.drawImage(img, x-s*0.5, y-s*1.2, s, s*1.5);
+      }
     } else {
-      ctx.fillRect(x+s*0.25, y-s*0.8+bobY, s*0.2, s*0.08);
-      ctx.fillStyle = '#f1c40f';
+      // Fallback: rectangle-based (other heroes)
+      if (this.animTimer % 20 === 0) this.animFrame = (this.animFrame + 1) % 2;
+      const bobY = this.animFrame === 0 ? 0 : -2;
+      const c = this.colors;
+      ctx.fillStyle = 'rgba(0,0,0,0.4)';
       ctx.beginPath();
-      ctx.arc(x+s*0.35, y-s*0.84+bobY, s*0.06, 0, Math.PI*2);
+      ctx.ellipse(x, y+4, s*0.4, s*0.1, 0, 0, Math.PI*2);
       ctx.fill();
+      ctx.fillStyle = c.body;
+      ctx.fillRect(x-s*0.3, y-s*0.9+bobY, s*0.6, s*0.5);
+      ctx.fillStyle = c.accent;
+      ctx.fillRect(x-s*0.3, y-s*0.45+bobY, s*0.6, s*0.15);
+      ctx.fillStyle = c.skin;
+      ctx.fillRect(x-s*0.2, y-s*1.15+bobY, s*0.4, s*0.3);
+      ctx.fillStyle = c.hair;
+      ctx.fillRect(x-s*0.22, y-s*1.18+bobY, s*0.44, s*0.12);
+      ctx.fillStyle = '#2d3436';
+      ctx.fillRect(x-s*0.1, y-s*0.95+bobY, s*0.08, s*0.08);
+      ctx.fillRect(x+s*0.05, y-s*0.95+bobY, s*0.08, s*0.08);
+      ctx.fillStyle = c.weapon;
+      if (this.classType === 'TANK') {
+        ctx.fillRect(x+s*0.25, y-s*0.7+bobY, s*0.25, s*0.35);
+        ctx.fillStyle = '#7f8c8d';
+        ctx.fillRect(x+s*0.27, y-s*0.68+bobY, s*0.21, s*0.31);
+      } else if (this.classType === 'MAGE') {
+        ctx.fillRect(x+s*0.25, y-s*0.9+bobY, s*0.06, s*0.55);
+        ctx.fillStyle = '#f1c40f';
+        ctx.beginPath();
+        ctx.arc(x+s*0.28, y-s*0.95+bobY, s*0.08, 0, Math.PI*2);
+        ctx.fill();
+      } else {
+        ctx.fillRect(x+s*0.25, y-s*0.8+bobY, s*0.2, s*0.08);
+        ctx.fillStyle = '#f1c40f';
+        ctx.beginPath();
+        ctx.arc(x+s*0.35, y-s*0.84+bobY, s*0.06, 0, Math.PI*2);
+        ctx.fill();
+      }
     }
     // Hit flash
     if (this.hitFlash > 0) {
       ctx.fillStyle = `rgba(255,255,255,${this.hitFlash/8*0.5})`;
-      ctx.fillRect(x-s*0.3, y-s*1.15+bobY, s*0.6, s*1.2);
+      ctx.fillRect(x-s*0.3, y-s*1.15, s*0.6, s*1.2);
       this.hitFlash--;
+      if (hasSprite && this.animAction !== 'attack') this.setAction('hit');
     }
     // Heal flash
     if (this.healFlash > 0) {
       ctx.fillStyle = `rgba(46,204,113,${this.healFlash/10*0.3})`;
-      ctx.fillRect(x-s*0.3, y-s*1.15+bobY, s*0.6, s*1.2);
+      ctx.fillRect(x-s*0.3, y-s*1.15, s*0.6, s*1.2);
       this.healFlash--;
     }
     // HP bar

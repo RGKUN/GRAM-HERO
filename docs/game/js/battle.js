@@ -46,6 +46,7 @@ class BattleSystem {
       if (!hero.isAlive) return;
       hero.tickCooldowns();
       hero.addEnergy(3);
+      hero.setAction('attack');
       const target = this.enemies.find(e=>e.isAlive);
       if (!target) return;
       let usedSkill = null;
