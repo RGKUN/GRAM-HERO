@@ -1,8 +1,6 @@
-// GRAM AFK HEROES - Battle System
-
 class BattleSystem {
   constructor(party, stage, bossIndex) {
-    this.party = party.filter(h => h.isAlive);
+    this.party = party.filter(h=>h.isAlive);
     this.allParty = party;
     this.stage = stage;
     this.bossIndex = bossIndex;
@@ -13,330 +11,183 @@ class BattleSystem {
     this.autoBattle = true;
     this.battleSpeed = 1;
     this.state = 'WAVE_INTRO';
-    this.rewards = { xp: 0, gold: 0, diamond: 0, items: [] };
+    this.rewards = { xp:0, gold:0 };
     this.damageNumbers = [];
     this.effects = [];
     this.battleLog = [];
     this.turnTimer = 0;
-    this.turnDelay = 60;
+    this.turnDelay = 50;
     this.isVictory = false;
     this.isDefeat = false;
-    this.battleStarted = false;
     this.bossDefeated = false;
-    this.waveComplete = false;
     this.totalKills = 0;
     this.bossAppearTimer = 0;
-    
     this.startWave();
   }
-
   startWave() {
-    this.enemies = generateWave(this.stage, this.currentWave, this.totalWaves);
+    this.enemies = generateWave(this.stage, this.currentWave);
     this.state = 'WAVE_INTRO';
     this.turnTimer = 0;
-    this.battleLog.push(`Wave ${this.currentWave + 1}`);
-    events.emit('battle_wave', { wave: this.currentWave + 1, total: this.totalWaves });
   }
-
   startBoss() {
     this.enemies = [generateBoss(this.stage, this.bossIndex)];
     this.state = 'BOSS_INTRO';
-    this.bossAppearTimer = 60;
-    this.battleLog.push(`BOSS: ${this.enemies[0].name}!`);
-    events.emit('battle_boss', { boss: this.enemies[0].name });
+    this.bossAppearTimer = 50;
   }
-
   update() {
-    if (this.isVictory || this.isDefeat) return;
-
+    if (this.isVictory||this.isDefeat) return;
     this.turnTimer++;
-    const delay = Math.floor(this.turnDelay / this.battleSpeed);
-    
-    if (this.state === 'BOSS_INTRO') {
-      this.bossAppearTimer--;
-      if (this.bossAppearTimer <= 0) {
-        this.state = 'BATTLE';
-      }
-      return;
-    }
-
-    if (this.state !== 'BATTLE') {
-      if (this.turnTimer > 30) {
-        this.state = 'BATTLE';
-      }
-      return;
-    }
-
-    if (this.turnTimer < delay) return;
+    if (this.state==='BOSS_INTRO') { this.bossAppearTimer--; if(this.bossAppearTimer<=0) this.state='BATTLE'; return; }
+    if (this.state!=='BATTLE') { if(this.turnTimer>30) this.state='BATTLE'; return; }
+    if (this.turnTimer < Math.floor(this.turnDelay/this.battleSpeed)) return;
     this.turnTimer = 0;
 
-    // Hero actions
-    this.party.forEach((hero, i) => {
+    this.party.forEach(hero => {
       if (!hero.isAlive) return;
       hero.tickCooldowns();
-      
-      // Energy from basic attack
       hero.addEnergy(3);
-      
-      // Target selection - hero attacks first enemy
-      const target = this.enemies.find(e => e.isAlive);
+      const target = this.enemies.find(e=>e.isAlive);
       if (!target) return;
-
-      // Skill usage (auto battle AI)
       let usedSkill = null;
-      
+
       if (hero.useEnergy()) {
-        // Use Ultimate
         const ult = hero.skills[2];
-        if (ult && ult.type === 'ultimate') {
-          usedSkill = hero.useSkill(2) || hero.skills[2];
-          if (hero.classType === 'HEALER') {
-            this.healAllHeroes(usedSkill.power * hero.healPower);
-          } else if (usedSkill.power >= 4.0) {
-            // AoE ultimate
-            this.enemies.forEach(e => {
-              if (e.isAlive) {
-                const dmg = this.calcDamage(hero, e, usedSkill.power);
-                const actualDmg = e.takeDamage(dmg);
-                this.addDamageNumber(e, actualDmg, true);
-              }
-            });
+        if (ult && ult.type==='ultimate') {
+          usedSkill = true;
+          if (hero.classType==='HEALER') {
+            this.party.forEach(h=>{ if(h.isAlive){ const hl=h.heal(Math.floor(ult.power*hero.healPower)); if(hl>0) this.addNum(h,'+'+hl,'#2ecc71',14); }});
           } else {
-            const dmg = this.calcDamage(hero, target, usedSkill.power);
-            const actualDmg = target.takeDamage(dmg);
-            this.addDamageNumber(target, actualDmg, true);
+            this.enemies.forEach(e=>{ if(e.isAlive){ const d=this.calcDmg(hero,e,ult.power); const a=e.takeDamage(d); this.addNum(e,'-'+a,'#f1c40f',16); this.addFx('ult',e); }});
           }
-          this.addEffect('ultimate', hero);
           return;
         }
       }
-
-      // Regular skill
-      for (let s = 0; s < 2; s++) {
+      for (let s=0;s<2;s++) {
         if (hero.canUseSkill(s)) {
           const skill = hero.useSkill(s);
           if (skill) {
-            usedSkill = skill;
-            if (skill.type === 'heal') {
-              const weakest = this.party.filter(h => h.isAlive).sort((a, b) => a.hp / a.maxHp - b.hp / b.maxHp)[0];
-              if (weakest && weakest.hp / weakest.maxHp < 0.7) {
-                const healAmt = Math.floor(skill.power * hero.healPower);
-                const healed = weakest.heal(healAmt);
-                this.addHealNumber(weakest, healed);
-              } else {
-                hero.cooldowns[s] = 0;
-              }
-            } else if (skill.type === 'shield') {
-              this.party.forEach(h => {
-                if (h.isAlive) h.defBuff += Math.floor(h.def * 0.3);
-              });
+            usedSkill = true;
+            if (skill.type==='heal') {
+              const weak = this.party.filter(h=>h.isAlive).sort((a,b)=>a.hp/a.maxHp-b.hp/b.maxHp)[0];
+              if (weak && weak.hp/weak.maxHp<0.7) {
+                const hl = weak.heal(Math.floor(skill.power*hero.healPower));
+                this.addNum(weak,'+'+hl,'#2ecc71',13);
+              } else hero.cooldowns[s]=0;
+            } else if (skill.type==='shield') {
+              this.party.forEach(h=>{ if(h.isAlive) h.defBuff+=Math.floor(h.def*0.3); });
             } else {
-              const dmg = this.calcDamage(hero, target, skill.power);
-              const actualDmg = target.takeDamage(dmg);
-              this.addDamageNumber(target, actualDmg, false);
+              const d=this.calcDmg(hero,target,skill.power);
+              const a=target.takeDamage(d);
+              this.addNum(target,'-'+a,'#ff8a65',13);
             }
             break;
           }
         }
       }
-
-      // Basic attack
       if (!usedSkill) {
-        const dmg = this.calcDamage(hero, target, 1.0);
-        const actualDmg = target.takeDamage(dmg);
-        const isCrit = Math.random() * 100 < hero.critRate;
+        const d=this.calcDmg(hero,target,1.0);
+        const isCrit = Math.random()*100 < hero.critRate;
+        let a = target.takeDamage(d);
         if (isCrit) {
-          const critDmg = Math.floor(dmg * hero.critDmg);
-          const actualCritDmg = target.takeDamage(critDmg - dmg);
-          this.addDamageNumber(target, actualDmg + actualCritDmg, true);
+          const cd = Math.floor(d*hero.critDmg);
+          a = target.takeDamage(cd-d);
+          this.addNum(target,'-'+(d+a),'#f1c40f',15);
+          this.addFx('crit',target);
         } else {
-          this.addDamageNumber(target, actualDmg, false);
+          this.addNum(target,'-'+a,'#ffffff',11);
+          this.addFx('hit',target);
         }
       }
     });
 
-    // Check enemy deaths
-    this.enemies.forEach(e => {
-      if (!e.isAlive && e.hp === 0 && !e._counted) {
-        e._counted = true;
-        this.rewards.xp += e.xpReward;
-        this.rewards.gold += e.goldReward;
-        this.totalKills++;
-        this.addEffect('death', e);
-      }
+    this.enemies.forEach(e=>{
+      if (!e.isAlive && !e._counted) { e._counted=true; this.rewards.xp+=e.xp; this.rewards.gold+=e.gold; this.totalKills++; this.addFx('death',e); }
     });
 
-    // Boss mechanic
-    const boss = this.enemies.find(e => e.isBoss && e.isAlive);
-    if (boss && this.turn % 3 === 0) {
-      const mechEffects = boss.applyMechanic(this.enemies);
-      mechEffects.forEach(e => this.effects.push({ ...e, timer: 30 }));
-    }
+    const boss = this.enemies.find(e=>e.isBoss&&e.isAlive);
+    if (boss && this.turn%3===0) boss.applyMechanic(this.enemies);
 
-    // Enemy attacks
-    this.enemies.forEach(enemy => {
+    this.enemies.forEach(enemy=>{
       if (!enemy.isAlive) return;
-      
-      const targets = this.party.filter(h => h.isAlive && h.position === 'FRONT');
-      const targetList = targets.length > 0 ? targets : this.party.filter(h => h.isAlive);
-      if (targetList.length === 0) return;
-      
-      const target = targetList[Utils.rand(0, targetList.length - 1)];
-      
-      // Damage from mechanics
-      let dmg = enemy.atk;
-      if (enemy.mech === 'poison') dmg += enemy.poisonDmg;
-      
-      const actualDmg = target.takeDamage(dmg);
-      this.addDamageNumber(target, actualDmg, false);
-      this.addEffect('enemy_attack', { x: target });
-      
-      // Lifesteal
-      if (enemy.mech === 'lifesteal') {
-        enemy.hp = Math.min(enemy.hp + Math.floor(actualDmg * 0.2), enemy.maxHp);
-      }
+      const front = this.party.filter(h=>h.isAlive&&h.position==='FRONT');
+      const targets = front.length>0 ? front : this.party.filter(h=>h.isAlive);
+      if (targets.length===0) return;
+      const target = targets[Utils.rand(0,targets.length-1)];
+      const a = target.takeDamage(enemy.atk);
+      this.addNum(target,'-'+a,'#e74c3c',11);
+      if (enemy.mech==='lifesteal') enemy.hp=Math.min(enemy.hp+Math.floor(a*0.2),enemy.maxHp);
     });
 
-    // Clean up def buffs
-    this.party.forEach(h => { h.defBuff = 0; });
+    this.party.forEach(h=>{ h.defBuff=0; });
 
-    // Check battle end
-    const allEnemiesDead = this.enemies.every(e => !e.isAlive);
-    const allHeroesDead = this.party.every(h => !h.isAlive);
-
-    if (allHeroesDead) {
-      this.isDefeat = true;
-      this.state = 'DEFEAT';
-      events.emit('battle_end', { result: 'DEFEAT' });
-      return;
-    }
-
-    if (allEnemiesDead) {
-      if (this.bossDefeated) {
-        this.isVictory = true;
-        this.state = 'VICTORY';
-        events.emit('battle_end', { result: 'VICTORY', rewards: this.rewards });
-        return;
-      }
-      
+    if (this.party.every(h=>!h.isAlive)) { this.isDefeat=true; this.state='DEFEAT'; events.emit('battle_end',{result:'DEFEAT'}); return; }
+    if (this.enemies.every(e=>!e.isAlive)) {
+      if (this.bossDefeated) { this.isVictory=true; this.state='VICTORY'; events.emit('battle_end',{result:'VICTORY',rewards:this.rewards}); return; }
       this.currentWave++;
-      if (this.currentWave >= this.totalWaves) {
-        this.startBoss();
-      } else {
-        this.startWave();
-      }
+      if (this.currentWave>=this.totalWaves) this.startBoss(); else this.startWave();
     }
-
     this.turn++;
   }
-
-  calcDamage(hero, enemy, powerMul) {
-    const baseDmg = hero.atk * powerMul;
-    return Math.max(1, Math.floor(baseDmg * 100 / (100 + enemy.def)));
+  calcDmg(hero,enemy,power) {
+    return Math.max(1, Math.floor(hero.atk*power*100/(100+enemy.def)));
   }
-
-  healAllHeroes(amount) {
-    this.party.forEach(h => {
-      if (h.isAlive) {
-        const healed = h.heal(amount);
-        if (healed > 0) this.addHealNumber(h, healed);
-      }
-    });
+  addNum(target,text,color,size) {
+    this.damageNumbers.push({ text, x:(target._dx||0)+Utils.rand(-8,8), y:(target._dy||0)-20, color, size, life:35, vy:-0.8 });
   }
-
-  addDamageNumber(target, amount, isCrit) {
-    const x = target._drawX || 0;
-    const y = target._drawY || 0;
-    this.damageNumbers.push({
-      text: isCrit ? `CRIT! ${amount}` : `-${amount}`,
-      x: x + Utils.rand(-10, 10),
-      y: y - 20,
-      color: isCrit ? '#f1c40f' : '#fff',
-      size: isCrit ? 16 : 12,
-      life: 40,
-      vy: -1
-    });
+  addFx(type,source) {
+    this.effects.push({ type, x:source._dx||0, y:source._dy||0, timer:20, color:source.colors?.body||'#fff' });
   }
-
-  addHealNumber(target, amount) {
-    const x = target._drawX || 0;
-    const y = target._drawY || 0;
-    this.damageNumbers.push({
-      text: `+${amount}`,
-      x: x + Utils.rand(-10, 10),
-      y: y - 20,
-      color: '#2ecc71',
-      size: 12,
-      life: 40,
-      vy: -1
-    });
+  updateFx() {
+    this.damageNumbers = this.damageNumbers.filter(n=>{ n.y+=n.vy; n.life--; return n.life>0; });
+    this.effects = this.effects.filter(e=>{ e.timer--; return e.timer>0; });
   }
-
-  addEffect(type, source) {
-    this.effects.push({
-      type,
-      x: source._drawX || 0,
-      y: source._drawY || 0,
-      timer: 20,
-      color: source.color || '#fff'
-    });
-  }
-
-  updateNumbers() {
-    this.damageNumbers = this.damageNumbers.filter(n => {
-      n.y += n.vy;
-      n.life--;
-      return n.life > 0;
-    });
-    this.effects = this.effects.filter(e => {
-      e.timer--;
-      return e.timer > 0;
-    });
-  }
-
   drawBattle(ctx, W, H) {
-    // Clear
-    if (typeof ASSETS !== "undefined" && ASSETS.bgStage) {
-      ctx.drawImage(ASSETS.bgStage, 0, 0, W, H);
-      ctx.fillStyle = "rgba(0,0,0,0.45)";
-      ctx.fillRect(0, 0, W, H);
+    // BG image or gradient fallback
+    if (window.game && window.game.assets && window.game.assets.bgStage) {
+      ctx.drawImage(window.game.assets.bgStage, 0, 0, W, H);
     } else {
-      ctx.fillStyle = "#0a0a1a";
-      ctx.fillRect(0, 0, W, H);
+      const bg = ctx.createLinearGradient(0,0,0,H);
+      bg.addColorStop(0,'#0d1117');
+      bg.addColorStop(0.4,'#161b22');
+      bg.addColorStop(1,'#0d1117');
+      ctx.fillStyle = bg;
+      ctx.fillRect(0,0,W,H);
     }
+    // Ground
+    ctx.fillStyle = '#1a2332';
+    ctx.fillRect(0,H*0.7,W,H*0.3);
+    ctx.fillStyle = '#1e2a3a';
+    for(let i=0;i<W;i+=20) ctx.fillRect(i,H*0.7,10,2);
 
-    // Draw stage info
-    ctx.fillStyle = '#94a3b8';
-    ctx.font = '12px monospace';
+    // Stage info
+    ctx.fillStyle = '#6b7280';
+    ctx.font = '10px monospace';
     ctx.textAlign = 'left';
-    ctx.fillText(`Stage ${this.stage} | Wave ${this.currentWave + 1}/${this.totalWaves}`, 10, 20);
+    ctx.fillText(`Stage ${this.stage} | Wave ${Math.min(this.currentWave+1,this.totalWaves)}/${this.totalWaves} | Turn ${this.turn}`, 8, 16);
 
-    // Draw heroes (left side)
-    const heroStartY = H * 0.3;
-    const heroSpacing = 80;
-    this.allParty.forEach((hero, i) => {
-      const x = W * 0.2;
-      const y = heroStartY + i * heroSpacing;
-      hero._drawX = x;
-      hero._drawY = y;
-      hero.draw(ctx, x, y, 45);
+    // Heroes
+    const heroY = H*0.65;
+    this.allParty.forEach((hero,i)=>{
+      const x = 55 + i*85;
+      const y = heroY;
+      hero._dx=x; hero._dy=y;
+      hero.draw(ctx,x,y,42);
     });
 
-    // Draw enemies (right side)
-    const aliveEnemies = this.enemies.filter(e => e.isAlive);
-    const enemyStartY = H * 0.3;
-    const enemySpacing = Math.min(80, (H * 0.5) / Math.max(aliveEnemies.length, 1));
-    aliveEnemies.forEach((enemy, i) => {
-      const x = W * 0.75;
-      const y = enemyStartY + i * enemySpacing;
-      enemy._drawX = x;
-      enemy._drawY = y;
-      enemy.draw(ctx, x, y, enemy.isBoss ? 55 : 35);
+    // Enemies
+    const aliveE = this.enemies.filter(e=>e.isAlive);
+    const eSpacing = Math.min(80, (W*0.55)/Math.max(aliveE.length,1));
+    const eStartX = W*0.55;
+    aliveE.forEach((enemy,i)=>{
+      const x = eStartX + i*eSpacing;
+      const y = heroY + (enemy.isBoss ? -20 : 0);
+      enemy._dx=x; enemy._dy=y;
+      enemy.draw(ctx,x,y,enemy.isBoss?50:32);
     });
 
     // Damage numbers
-    this.damageNumbers.forEach(n => {
-      ctx.globalAlpha = Math.min(1, n.life / 20);
+    this.damageNumbers.forEach(n=>{
+      ctx.globalAlpha = Math.min(1, n.life/15);
       ctx.fillStyle = n.color;
       ctx.font = `bold ${n.size}px monospace`;
       ctx.textAlign = 'center';
@@ -345,83 +196,64 @@ class BattleSystem {
     ctx.globalAlpha = 1;
 
     // Effects
-    this.effects.forEach(e => {
-      ctx.globalAlpha = e.timer / 20;
-      if (e.type === 'death') {
-        ctx.fillStyle = '#e74c3c';
-        ctx.beginPath();
-        ctx.arc(e.x, e.y, 30 - e.timer, 0, Math.PI * 2);
-        ctx.fill();
-      } else if (e.type === 'ultimate') {
-        ctx.fillStyle = e.color;
-        ctx.beginPath();
-        ctx.arc(e.x, e.y, 20 + e.timer, 0, Math.PI * 2);
-        ctx.fill();
-      } else if (e.type === 'enemy_attack') {
-        ctx.fillStyle = '#e74c3c';
-        ctx.fillRect(e.x - 15, e.y - 15, 30, 30);
-      } else if (e.type === 'boss_shield') {
-        ctx.strokeStyle = '#3498db';
-        ctx.lineWidth = 3;
-        ctx.strokeRect(e.x - 30, e.y - 30, 60, 60);
+    this.effects.forEach(e=>{
+      ctx.globalAlpha = e.timer/20;
+      if (e.type==='death') {
+        const g = ctx.createRadialGradient(e.x,e.y,0,e.x,e.y,30-e.timer);
+        g.addColorStop(0,e.color); g.addColorStop(1,'transparent');
+        ctx.fillStyle=g; ctx.beginPath(); ctx.arc(e.x,e.y,30-e.timer,0,Math.PI*2); ctx.fill();
+      } else if (e.type==='ult') {
+        const g = ctx.createRadialGradient(e.x,e.y,0,e.x,e.y,25);
+        g.addColorStop(0,'#f1c40f'); g.addColorStop(1,'transparent');
+        ctx.fillStyle=g; ctx.beginPath(); ctx.arc(e.x,e.y,25,0,Math.PI*2); ctx.fill();
+      } else if (e.type==='crit') {
+        ctx.fillStyle='#f1c40f';
+        for(let i=0;i<6;i++) {
+          const a=Math.random()*Math.PI*2, r=10+Math.random()*15;
+          ctx.fillRect(e.x+Math.cos(a)*r-2, e.y+Math.sin(a)*r-2, 4, 4);
+        }
+      } else if (e.type==='hit') {
+        ctx.fillStyle='#ffffff';
+        ctx.beginPath(); ctx.arc(e.x,e.y,8,0,Math.PI*2); ctx.fill();
       }
     });
     ctx.globalAlpha = 1;
 
-    // Wave intro text
-    if (this.state === 'WAVE_INTRO') {
-      ctx.fillStyle = 'rgba(0,0,0,0.5)';
-      ctx.fillRect(0, H/2 - 40, W, 80);
-      ctx.fillStyle = '#fff';
-      ctx.font = 'bold 24px monospace';
-      ctx.textAlign = 'center';
-      ctx.fillText(`WAVE ${this.currentWave + 1}`, W/2, H/2 + 8);
+    // Overlays
+    if (this.state==='WAVE_INTRO') {
+      ctx.fillStyle='rgba(0,0,0,0.6)'; ctx.fillRect(0,H/2-35,W,70);
+      ctx.fillStyle='#f1c40f'; ctx.font='bold 22px monospace'; ctx.textAlign='center';
+      ctx.fillText(`WAVE ${this.currentWave+1}`, W/2, H/2+8);
     }
-
-    // Boss intro
-    if (this.state === 'BOSS_INTRO') {
-      ctx.fillStyle = 'rgba(0,0,0,0.7)';
-      ctx.fillRect(0, H/2 - 50, W, 100);
-      ctx.fillStyle = '#f1c40f';
-      ctx.font = 'bold 28px monospace';
-      ctx.textAlign = 'center';
-      ctx.fillText('⚠ BOSS ⚠', W/2, H/2 - 5);
-      ctx.font = '16px monospace';
-      ctx.fillStyle = '#fff';
-      ctx.fillText(this.enemies[0]?.name || 'Unknown', W/2, H/2 + 25);
+    if (this.state==='BOSS_INTRO') {
+      ctx.fillStyle='rgba(0,0,0,0.7)'; ctx.fillRect(0,H/2-45,W,90);
+      ctx.fillStyle='#e74c3c'; ctx.font='bold 26px monospace'; ctx.textAlign='center';
+      ctx.fillText('⚠ BOSS ⚠', W/2, H/2-5);
+      ctx.fillStyle='#f1c40f'; ctx.font='14px monospace';
+      ctx.fillText(this.enemies[0]?.name||'', W/2, H/2+25);
     }
-
-    // Victory
     if (this.isVictory) {
-      ctx.fillStyle = 'rgba(0,0,0,0.6)';
-      ctx.fillRect(0, 0, W, H);
-      ctx.fillStyle = '#f1c40f';
-      ctx.font = 'bold 36px monospace';
-      ctx.textAlign = 'center';
-      ctx.fillText('VICTORY!', W/2, H/2 - 60);
-      ctx.font = '16px monospace';
-      ctx.fillStyle = '#fff';
-      ctx.fillText(`+${this.rewards.xp} XP`, W/2, H/2 - 20);
-      ctx.fillText(`+${this.rewards.gold} Gold`, W/2, H/2 + 10);
-      ctx.font = '12px monospace';
-      ctx.fillStyle = '#94a3b8';
-      ctx.fillText('Tap to continue', W/2, H/2 + 50);
+      ctx.fillStyle='rgba(0,0,0,0.65)'; ctx.fillRect(0,0,W,H);
+      const g = ctx.createRadialGradient(W/2,H/2,0,W/2,H/2,150);
+      g.addColorStop(0,'rgba(241,196,15,0.3)'); g.addColorStop(1,'transparent');
+      ctx.fillStyle=g; ctx.fillRect(0,0,W,H);
+      ctx.fillStyle='#f1c40f'; ctx.font='bold 32px monospace'; ctx.textAlign='center';
+      ctx.fillText('VICTORY!', W/2, H/2-50);
+      ctx.font='14px monospace'; ctx.fillStyle='#2ecc71';
+      ctx.fillText(`+${this.rewards.xp} XP`, W/2, H/2-10);
+      ctx.fillStyle='#f1c40f';
+      ctx.fillText(`+${this.rewards.gold} Gold`, W/2, H/2+15);
+      ctx.font='10px monospace'; ctx.fillStyle='#6b7280';
+      ctx.fillText('Tap to continue', W/2, H/2+50);
     }
-
-    // Defeat
     if (this.isDefeat) {
-      ctx.fillStyle = 'rgba(0,0,0,0.6)';
-      ctx.fillRect(0, 0, W, H);
-      ctx.fillStyle = '#e74c3c';
-      ctx.font = 'bold 36px monospace';
-      ctx.textAlign = 'center';
-      ctx.fillText('DEFEAT', W/2, H/2 - 40);
-      ctx.font = '14px monospace';
-      ctx.fillStyle = '#ccc';
-      ctx.fillText('Your heroes were defeated', W/2, H/2);
-      ctx.font = '12px monospace';
-      ctx.fillStyle = '#94a3b8';
-      ctx.fillText('Tap to retry', W/2, H/2 + 40);
+      ctx.fillStyle='rgba(0,0,0,0.65)'; ctx.fillRect(0,0,W,H);
+      ctx.fillStyle='#e74c3c'; ctx.font='bold 32px monospace'; ctx.textAlign='center';
+      ctx.fillText('DEFEAT', W/2, H/2-30);
+      ctx.font='12px monospace'; ctx.fillStyle='#94a3b8';
+      ctx.fillText('Your heroes fell in battle', W/2, H/2+5);
+      ctx.fillStyle='#6b7280'; ctx.font='10px monospace';
+      ctx.fillText('Tap to retry', W/2, H/2+40);
     }
   }
 }
