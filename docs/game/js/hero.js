@@ -103,7 +103,7 @@ class Hero {
     const hasSprite = this.classType === 'SWORDMAN' && g;
     if (hasSprite) {
       // Animation speed: idle 25, walk 12, attack 6, hit 10
-      const speed = this.animAction==='attack'?10:this.animAction==='walk'?12:this.animAction==='hit'?18:25;
+      const speed = this.animAction==='attack'?8:this.animAction==='walk'?12:this.animAction==='hit'?14:25;
       const maxFrames = this.animAction==='attack'?6:this.animAction==='hit'?2:4;
       if (this.animTimer % speed === 0) {
         this.animFrame++;

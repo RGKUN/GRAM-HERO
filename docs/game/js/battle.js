@@ -16,7 +16,7 @@ class BattleSystem {
     this.effects = [];
     this.battleLog = [];
     this.turnTimer = 0;
-    this.turnDelay = 80;
+    this.turnDelay = 65;
     this.isVictory = false;
     this.isDefeat = false;
     this.bossDefeated = false;
