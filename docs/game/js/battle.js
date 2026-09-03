@@ -1,4 +1,8 @@
 class BattleSystem {
+  playSfx(key) {
+    const g=window.game;
+    if(g&&g.sfx&&g.sfx[key]) { const a=g.sfx[key]; a.currentTime=0; a.play().catch(()=>{}); }
+  }
   constructor(party, stage, bossIndex) {
     this.party = party.filter(h=>h.isAlive);
     this.allParty = party;
@@ -58,6 +62,7 @@ class BattleSystem {
           if (hero.classType==='HEALER') {
             this.party.forEach(h=>{ if(h.isAlive){ const hl=h.heal(Math.floor(ult.power*hero.healPower)); if(hl>0) this.addNum(h,'+'+hl,'#2ecc71',14); }});
           } else {
+            this.playSfx('sword_3');
             this.enemies.forEach(e=>{ if(e.isAlive){ const d=this.calcDmg(hero,e,ult.power); const a=e.takeDamage(d); this.addNum(e,'-'+a,'#f1c40f',16); this.addFx('ult',e); }});
           }
           return;
@@ -77,6 +82,7 @@ class BattleSystem {
             } else if (skill.type==='shield') {
               this.party.forEach(h=>{ if(h.isAlive) h.defBuff+=Math.floor(h.def*0.3); });
             } else {
+              this.playSfx('sword_2');
               const d=this.calcDmg(hero,target,skill.power);
               const a=target.takeDamage(d);
               this.addNum(target,'-'+a,'#ff8a65',13);
@@ -86,6 +92,7 @@ class BattleSystem {
         }
       }
       if (!usedSkill) {
+        this.playSfx('sword_1');
         const d=this.calcDmg(hero,target,1.0);
         const isCrit = Math.random()*100 < hero.critRate;
         let a = target.takeDamage(d);

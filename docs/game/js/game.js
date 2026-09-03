@@ -135,7 +135,13 @@ class Game {
     }
   }
 }
-window.addEventListener('DOMContentLoaded',()=>{window.game=new Game();});
+window.addEventListener('DOMContentLoaded',()=>{window.game=new Game();    });
+    // SFX
+    this.sfx={};
+    ['sword_1','sword_2','sword_3'].forEach(k=>{
+      this.sfx[k]=new Audio('assets/sfx/'+k+'.wav');
+      this.sfx[k].volume=0.5;
+    });
 // Polyfill for roundRect
 if(!CanvasRenderingContext2D.prototype.roundRect){
   CanvasRenderingContext2D.prototype.roundRect=function(x,y,w,h,r){
