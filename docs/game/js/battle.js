@@ -296,8 +296,8 @@ class BattleSystem {
 
   drawBattle(ctx, W, H) {
     // Clear
-    if (window.game && window.game.assets.bgStage) {
-      ctx.drawImage(window.game.assets.bgStage, 0, 0, W, H);
+    if (typeof ASSETS !== "undefined" && ASSETS.bgStage) {
+      ctx.drawImage(ASSETS.bgStage, 0, 0, W, H);
     } else {
       ctx.fillStyle = "#0a0a1a";
       ctx.fillRect(0, 0, W, H);

@@ -27,21 +27,10 @@ class Game {
     this.gachaResult = null;
     this.notification = null;
     this.notificationTimer = 0;
-    this.assets = { bgStage: null, bgHome: null };
-    this.loadAssets();
+    // Assets loaded globally via assets.js
     this.init();
   }
 
-  loadAssets() {
-    const loadImg = (key, src) => {
-      const img = new Image();
-      img.onload = () => { this.assets[key] = img; };
-      img.onerror = () => { console.warn('Failed to load:', src); };
-      img.src = src;
-    };
-    loadImg('bgStage', 'assets/bg_stage.png');
-    loadImg('bgHome', 'assets/bg_home.png');
-  }
 
   init() {
     // Starter hero
