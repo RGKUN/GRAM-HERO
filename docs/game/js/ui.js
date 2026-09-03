@@ -20,6 +20,8 @@ class UIManager {
   drawHome(ctx, W, H) {
     if (this.game && this.game.assets && this.game.assets.bgHome) {
       ctx.drawImage(this.game.assets.bgHome, 0, 0, W, H);
+      ctx.fillStyle='rgba(0,0,0,0.5)';
+      ctx.fillRect(0,0,W,H);
     } else {
       const bg = ctx.createLinearGradient(0,0,0,H);
       bg.addColorStop(0,'#0d1117'); bg.addColorStop(0.5,'#161b22'); bg.addColorStop(1,'#0d1117');

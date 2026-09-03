@@ -145,6 +145,8 @@ class BattleSystem {
     // BG image or gradient fallback
     if (window.game && window.game.assets && window.game.assets.bgStage) {
       ctx.drawImage(window.game.assets.bgStage, 0, 0, W, H);
+      ctx.fillStyle='rgba(0,0,0,0.4)';
+      ctx.fillRect(0,0,W,H);
     } else {
       const bg = ctx.createLinearGradient(0,0,0,H);
       bg.addColorStop(0,'#0d1117');
