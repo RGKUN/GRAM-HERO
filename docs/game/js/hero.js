@@ -171,10 +171,12 @@ class Hero {
         ctx.fill();
       }
     }
-    // Hit flash
+    // Hit flash (subtle ellipse, no box)
     if (this.hitFlash > 0) {
-      ctx.fillStyle = `rgba(255,255,255,${this.hitFlash/8*0.5})`;
-      ctx.fillRect(x-s*0.3, y-s*1.15, s*0.6, s*1.2);
+      ctx.fillStyle = `rgba(255,255,255,${this.hitFlash/8*0.35})`;
+      ctx.beginPath();
+      ctx.ellipse(x, y-s*0.55, s*0.35, s*0.6, 0, 0, Math.PI*2);
+      ctx.fill();
       this.hitFlash--;
       if (hasSprite && this.animAction !== 'attack' && this.animAction !== 'hit') this.setAction('hit');
     }

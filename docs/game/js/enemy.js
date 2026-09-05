@@ -122,23 +122,25 @@ class Enemy {
       ctx.beginPath(); ctx.ellipse(x, y+4, s*0.5, s*0.12, 0,0,Math.PI*2); ctx.fill();
     }
 
-    // Hit flash (both)
+    // Hit flash (subtle tint over sprite footprint, no thick box)
     if (this.hitFlash > 0) {
-      ctx.fillStyle = `rgba(255,255,255,${this.hitFlash/15*0.5})`;
-      const fs = this.isBoss ? s*1.5 : s;
-      ctx.fillRect(x-fs*0.4, y-fs*1.2, fs*0.8, fs*1.5);
+      const fs = this.isBoss ? s*1.3 : s;
+      ctx.fillStyle = `rgba(255,255,255,${this.hitFlash/15*0.30})`;
+      ctx.beginPath();
+      ctx.ellipse(x, y-fs*0.5, fs*0.42, fs*0.75, 0, 0, Math.PI*2);
+      ctx.fill();
       this.hitFlash--;
-      if (this.animAction !== 'hit') this.setAction('hit');
+      if (this.animAction !== 'hit' && this.animAction !== 'attack') this.setAction('hit');
     }
     // Shield
     if (this.shield > 0) {
       ctx.strokeStyle = '#3498db'; ctx.lineWidth = 2;
-      const fs = this.isBoss ? s*1.5 : s;
-      ctx.strokeRect(x-fs*0.4-3, y-fs*1.25, fs*0.8+6, fs*1.3+6);
+      const fs = this.isBoss ? s*1.3 : s;
+      ctx.strokeRect(x-fs*0.4-2, y-fs*1.15, fs*0.8+4, fs*1.2+4);
       ctx.lineWidth = 1;
     }
     // HP bar
-    const fs = this.isBoss ? s*1.5 : s;
+    const fs = this.isBoss ? s*1.3 : s;
     const bw = fs*0.7, bh = this.isBoss?6:4;
     const bx = x-bw/2, by = y-fs*1.35;
     ctx.fillStyle = '#1a1a2e';
