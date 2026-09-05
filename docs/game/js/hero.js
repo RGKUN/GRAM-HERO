@@ -109,8 +109,7 @@ class Hero {
         this.animFrame++;
         if (this.animAction==='attack') {
           if (this.animFrame >= maxFrames) {
-            // Hold last attack frame briefly then return to idle
-            this.animFrame = maxFrames - 1;
+            this.animFrame = 0;
             this.animTimer = -20;
             this.animAction = 'idle';
           }

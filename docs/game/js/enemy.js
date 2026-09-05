@@ -68,17 +68,19 @@ class Enemy {
 
     // Slime sprites (non-boss)
     if (!this.isBoss && g) {
-      const speed = this.animAction==='hit'?14:12;
-      const maxFrames = this.animAction==='hit'?2:4;
+      // Regular slimes have no attack sprites; treat attack as idle
+      const effAction = this.animAction==='attack' ? 'idle' : this.animAction;
+      const speed = effAction==='hit'?14:12;
+      const maxFrames = effAction==='hit'?2:4;
       if (this.animTimer % speed === 0) {
         this.animFrame++;
-        if (this.animAction === 'hit') {
-          if (this.animFrame >= maxFrames) { this.animAction = 'idle'; this.animFrame = 0; }
+        if (effAction === 'hit') {
+          if (this.animFrame >= maxFrames) { this.setAction('idle'); this.animFrame = 0; }
         } else {
           this.animFrame = this.animFrame % maxFrames;
         }
       }
-      const img = g['slime_'+this.animAction+'_'+(this.animFrame+1)];
+      const img = g['slime_'+effAction+'_'+(this.animFrame+1)];
       // Shadow
       ctx.fillStyle = 'rgba(0,0,0,0.4)';
       ctx.beginPath(); ctx.ellipse(x, y+4, s*0.5, s*0.12, 0,0,Math.PI*2); ctx.fill();

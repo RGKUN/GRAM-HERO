@@ -36,7 +36,7 @@ class Game {
     for(const[k,v] of Object.entries(imgs)){
       const img=new Image();
       img.onload=((key,img)=>()=>{this.assets[key]=img;console.log('[ASSETS] Loaded:'+key);})(k,img);
-      img.onerror=(()=>{console.error('[ASSETS] Failed:'+v);})();
+      img.onerror=()=>{console.error('[ASSETS] Failed:'+v);};
       img.src=v;
     }
     // SFX
