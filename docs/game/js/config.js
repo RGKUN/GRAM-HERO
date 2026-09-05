@@ -50,25 +50,43 @@ const CONFIG = {
     SUPPORT: { name: 'Shaman Slime', colors: { body: '#f1c40f', accent: '#f39c12', eye: '#2ecc71' }, hp: 90, atk: 10, def: 6 }
   },
   bosses: [
-    { name: 'Stone Golem', mech: 'highDef', colors: { body: '#7f8c8d', accent: '#95a5a6', eye: '#e74c3c' }, hp: 800, atk: 30, def: 30 },
-    { name: 'Infernal Mage', mech: 'aoe', colors: { body: '#e74c3c', accent: '#c0392b', eye: '#f39c12' }, hp: 1000, atk: 40, def: 10 },
-    { name: 'Blood Demon', mech: 'lifesteal', colors: { body: '#c0392b', accent: '#922b21', eye: '#e74c3c' }, hp: 1200, atk: 35, def: 15 },
-    { name: 'Rage Beast', mech: 'rage', colors: { body: '#d35400', accent: '#e67e22', eye: '#f1c40f' }, hp: 900, atk: 38, def: 12 },
-    { name: 'Crystal Lord', mech: 'shield', colors: { body: '#16a085', accent: '#1abc9c', eye: '#ecf0f1' }, hp: 1500, atk: 25, def: 25 },
-    { name: 'Phantom Queen', mech: 'speed', colors: { body: '#6c5ce7', accent: '#a29bfe', eye: '#fd79a8' }, hp: 1100, atk: 42, def: 8 },
-    { name: 'Venom Lord', mech: 'poison', colors: { body: '#27ae60', accent: '#2ecc71', eye: '#e74c3c' }, hp: 1000, atk: 32, def: 18 },
-    { name: 'Giant Slime King', mech: 'summon', colors: { body: '#f39c12', accent: '#f1c40f', eye: '#e74c3c' }, hp: 1300, atk: 30, def: 20 },
-    { name: 'Shadow Stalker', mech: 'crit', colors: { body: '#2d3436', accent: '#636e72', eye: '#e74c3c' }, hp: 1200, atk: 45, def: 10 },
-    { name: 'Iron Guardian', mech: 'tank', colors: { body: '#95a5a6', accent: '#bdc3c7', eye: '#3498db' }, hp: 1800, atk: 28, def: 30 },
-    { name: 'Dark Priest', mech: 'healer', colors: { body: '#8e44ad', accent: '#6c3483', eye: '#e74c3c' }, hp: 1000, atk: 38, def: 14 },
-    { name: 'Storm Titan', mech: 'aoe', colors: { body: '#34495e', accent: '#2c3e50', eye: '#3498db' }, hp: 1600, atk: 40, def: 20 },
-    { name: 'Berserker King', mech: 'berserk', colors: { body: '#e74c3c', accent: '#c0392b', eye: '#f1c40f' }, hp: 1400, atk: 50, def: 12 },
-    { name: 'Void Emperor', mech: 'shield', colors: { body: '#2d3436', accent: '#6c5ce7', eye: '#e74c3c' }, hp: 1700, atk: 45, def: 18 },
-    { name: 'Grand Slime', mech: 'final', colors: { body: '#c843cf', accent: '#a855f7', eye: '#fbbf24' }, hp: 2500, atk: 55, def: 25 }
+    // Stage 1 boss
+    { name: 'Giant Slime', mech: 'summon', colors: { body: '#27ae60', accent: '#2ecc71', eye: '#f1c40f' }, hp: 800, atk: 25, def: 10 },
+    // Stage 2 boss
+    { name: 'Iron Slime King', mech: 'shield', colors: { body: '#95a5a6', accent: '#bdc3c7', eye: '#3498db' }, hp: 1200, atk: 30, def: 25 },
+    // Stage 3 boss
+    { name: 'Fury Slime Lord', mech: 'rage', colors: { body: '#e67e22', accent: '#d35400', eye: '#e74c3c' }, hp: 1500, atk: 40, def: 12 },
+    // Stage 4 boss
+    { name: 'Arcane Slime', mech: 'aoe', colors: { body: '#8e44ad', accent: '#9b59b6', eye: '#f1c40f' }, hp: 1800, atk: 35, def: 18 },
+    // Stage 5 boss
+    { name: 'Shaman Slime Elder', mech: 'healer', colors: { body: '#f1c40f', accent: '#f39c12', eye: '#2ecc71' }, hp: 2000, atk: 30, def: 20 },
+    // Stage 6 boss
+    { name: 'Venom Slime', mech: 'poison', colors: { body: '#27ae60', accent: '#1e8449', eye: '#e74c3c' }, hp: 2400, atk: 38, def: 22 },
+    // Stage 7 boss
+    { name: 'Shadow Slime', mech: 'crit', colors: { body: '#2d3436', accent: '#636e72', eye: '#e74c3c' }, hp: 2800, atk: 42, def: 15 },
+    // Stage 8 boss
+    { name: 'Storm Slime', mech: 'aoe', colors: { body: '#34495e', accent: '#2c3e50', eye: '#3498db' }, hp: 3200, atk: 45, def: 20 },
+    // Stage 9 boss
+    { name: 'Void Slime Emperor', mech: 'shield', colors: { body: '#2d3436', accent: '#6c5ce7', eye: '#e74c3c' }, hp: 3800, atk: 48, def: 25 },
+    // Stage 10 boss
+    { name: 'Grand Slime King', mech: 'summon', colors: { body: '#c843cf', accent: '#a855f7', eye: '#fbbf24' }, hp: 5000, atk: 55, def: 30 }
   ],
   gacha: { heroCost: 100, heroCost10: 900, heroRates: { COMMON: 50, RARE: 30, EPIC: 15, LEGENDARY: 4.5, MYTHIC: 0.5 }, pityLegendary: 10, pityMythic: 40 },
   economy: { slimeGold: [10, 50], bossGold: [200, 500], slimeXp: [100, 300], bossXp: [500, 1500] },
-  battle: { waveCount: 3, minSlimePerWave: [2, 3, 4] }
+  battle: { waveCount: 3, minSlimePerWave: [2, 3, 4] },
+  // Stage definitions — 10 stages
+  stages: [
+    { name: 'Slime Plains',     waves: 3, counts: [2, 3, 4], types: ['NORMAL'],                           hpMul: 1.0,  atkMul: 1.0,  defMul: 1.0,  xpMul: 1.0,  goldMul: 1.0,  bossIdx: 0 },
+    { name: 'Green Grotto',     waves: 3, counts: [2, 3, 4], types: ['NORMAL', 'TANK'],                   hpMul: 1.4,  atkMul: 1.2,  defMul: 1.3,  xpMul: 1.3,  goldMul: 1.2,  bossIdx: 1 },
+    { name: 'Fury Hollow',      waves: 3, counts: [3, 3, 5], types: ['NORMAL', 'ATTACK'],                 hpMul: 1.8,  atkMul: 1.5,  defMul: 1.1,  xpMul: 1.6,  goldMul: 1.4,  bossIdx: 2 },
+    { name: 'Arcane Depths',    waves: 3, counts: [3, 4, 5], types: ['NORMAL', 'RANGED', 'ATTACK'],       hpMul: 2.3,  atkMul: 1.8,  defMul: 1.2,  xpMul: 2.0,  goldMul: 1.6,  bossIdx: 3 },
+    { name: 'Toxic Marsh',      waves: 4, counts: [3, 4, 4, 5], types: ['NORMAL', 'TANK', 'ATTACK'],      hpMul: 3.0,  atkMul: 2.0,  defMul: 1.5,  xpMul: 2.5,  goldMul: 2.0,  bossIdx: 4 },
+    { name: 'Dark Cavern',      waves: 4, counts: [4, 4, 5, 5], types: ['NORMAL', 'RANGED', 'TANK'],      hpMul: 3.8,  atkMul: 2.3,  defMul: 1.8,  xpMul: 3.0,  goldMul: 2.5,  bossIdx: 5 },
+    { name: 'Blood Shrine',     waves: 4, counts: [4, 5, 5, 6], types: ['NORMAL', 'ATTACK', 'RANGED'],    hpMul: 5.0,  atkMul: 2.8,  defMul: 2.0,  xpMul: 4.0,  goldMul: 3.0,  bossIdx: 6 },
+    { name: 'Storm Peak',       waves: 5, counts: [4, 5, 5, 6, 6], types: ['NORMAL', 'TANK', 'ATTACK'],   hpMul: 6.5,  atkMul: 3.2,  defMul: 2.5,  xpMul: 5.0,  goldMul: 4.0,  bossIdx: 7 },
+    { name: 'Void Abyss',       waves: 5, counts: [5, 5, 6, 6, 7], types: ['NORMAL', 'TANK', 'ATTACK', 'RANGED'], hpMul: 8.0, atkMul: 3.8, defMul: 3.0, xpMul: 6.5, goldMul: 5.0, bossIdx: 8 },
+    { name: "King's Throne",    waves: 5, counts: [5, 6, 7, 7, 8], types: ['NORMAL', 'TANK', 'ATTACK', 'RANGED', 'SUPPORT'], hpMul: 10.0, atkMul: 4.5, defMul: 3.5, xpMul: 8.0, goldMul: 6.0, bossIdx: 9 }
+  ]
 };
 const RARITY = {
   COMMON: { name: 'Common', color: '#95a5a6', glow: '#7f8c8d', multiplier: 1.0 },

@@ -154,14 +154,20 @@ class Enemy {
     ctx.fillText(this.name, x, by-4);
   }
 }
-function generateWave(stage, waveNum) {
+function generateWave(stageIdx, waveNum) {
   const enemies = [];
-  const types = Object.keys(CONFIG.slime);
-  const count = CONFIG.battle.minSlimePerWave[Math.min(waveNum, CONFIG.battle.minSlimePerWave.length-1)];
-  const scale = 1 + (stage-1)*0.15 + waveNum*0.1;
-  for (let i=0;i<count;i++) enemies.push(new Enemy(types[Utils.rand(0,types.length-1)], scale));
+  const s = CONFIG.stages[stageIdx] || CONFIG.stages[0];
+  const count = s.counts[Math.min(waveNum, s.counts.length-1)] || 2;
+  const types = s.types;
+  const baseScale = s.hpMul;
+  const waveBonus = 1 + waveNum * 0.08;
+  for (let i=0; i<count; i++) {
+    const type = types[Utils.rand(0, types.length-1)];
+    enemies.push(new Enemy(type, baseScale * waveBonus));
+  }
   return enemies;
 }
-function generateBoss(stage, bossIndex) {
-  return new Enemy(null, 1+(stage-1)*0.2, true, bossIndex);
+function generateBoss(stageIdx) {
+  const s = CONFIG.stages[stageIdx] || CONFIG.stages[0];
+  return new Enemy(null, s.hpMul, true, s.bossIdx);
 }

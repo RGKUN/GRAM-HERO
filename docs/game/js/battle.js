@@ -10,13 +10,12 @@ class BattleSystem {
       }
     } catch(e) {}
   }
-  constructor(party, stage, bossIndex) {
+  constructor(party, stage) {
     this.party = party.filter(h=>h.isAlive);
     this.allParty = party;
     this.stage = stage;
-    this.bossIndex = bossIndex;
     this.currentWave = 0;
-    this.totalWaves = CONFIG.battle.waveCount;
+    this.totalWaves = (CONFIG.stages[this.stage] || CONFIG.stages[0]).waves;
     this.enemies = [];
     this.turn = 0;
     this.screenShake = 0;
@@ -48,7 +47,7 @@ class BattleSystem {
     this.allParty.forEach(h=>{ if(h.isAlive) h.setAction('walk'); });
   }
   startBoss() {
-    this.enemies = [generateBoss(this.stage, this.bossIndex)];
+    this.enemies = [generateBoss(this.stage)];
     this.state = 'BOSS_INTRO';
     this.bossAppearTimer = 80;
     this.allParty.forEach(h=>{ if(h.isAlive) h.setAction('walk'); });
@@ -239,7 +238,8 @@ class BattleSystem {
     ctx.fillStyle='#f1c40f';
     ctx.font='bold 10px monospace';
     ctx.textAlign='left';
-    ctx.fillText(`Stage ${this.stage} | Wave ${Math.min(this.currentWave+1,this.totalWaves)}/${this.totalWaves}`, 8, 15);
+    const stageName = (CONFIG.stages[this.stage] || CONFIG.stages[0]).name;
+    ctx.fillText(`${stageName} — Wave ${Math.min(this.currentWave+1,this.totalWaves)}/${this.totalWaves}`, 8, 15);
     ctx.fillStyle='#6b7280'; ctx.textAlign='right';
     ctx.fillText(`Turn ${this.turn}`, W-8, 15);
 
@@ -385,7 +385,7 @@ aliveE.forEach((enemy,i)=>{
       g.addColorStop(0,'rgba(241,196,15,0.3)'); g.addColorStop(1,'transparent');
       ctx.fillStyle=g; ctx.fillRect(0,0,W,H);
       ctx.fillStyle='#f1c40f'; ctx.font='bold 32px monospace'; ctx.textAlign='center';
-      ctx.fillText('VICTORY!', W/2, H/2-50);
+      ctx.fillText('STAGE CLEAR!', W/2, H/2-50);
       ctx.font='14px monospace'; ctx.fillStyle='#2ecc71';
       ctx.fillText(`+${this.rewards.xp} XP`, W/2, H/2-10);
       ctx.fillStyle='#f1c40f';

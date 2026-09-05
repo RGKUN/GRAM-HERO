@@ -6,7 +6,7 @@ class Game {
     this.canvas.width=this.W; this.canvas.height=this.H;
     this.screen='HOME';
     this.autoBattle=true; this.battleSpeed=1;
-    this.stage=1; this.bossIndex=0;
+    this.stage=1;
     this.gold=500; this.diamond=100;
     this.heroes=[]; this.party=[]; this.dailyQuests=[]; this.achievements=[];
     this.battle=null;
@@ -57,12 +57,18 @@ class Game {
       if(data.result==='VICTORY'){
         this.gold+=data.rewards.gold;
         this.party.forEach(h=>{ if(h.isAlive) h.addXp(data.rewards.xp); });
+        let msg = `+${data.rewards.gold} Gold!`;
         if(this.battle&&this.battle.bossDefeated){
-          this.bossIndex++;
-          if(this.bossIndex>=CONFIG.bosses.length){this.bossIndex=0;this.stage++;this.showNotification(`Stage ${this.stage} unlocked!`);}
+          if(this.stage < CONFIG.stages.length){
+            const nextStage = CONFIG.stages[this.stage];
+            this.stage++;
+            msg += ` | ${nextStage.name} unlocked!`;
+          } else {
+            msg = 'All stages cleared! Great Hero!';
+          }
         }
+        this.showNotification(msg);
         this.dailyQuests.forEach(q=>{ if(q.type==='battle'&&!q.completed){q.progress++;if(q.progress>=q.target)q.completed=true;} });
-        this.showNotification(`+${data.rewards.gold} Gold!`);
       }
     });
   }
@@ -118,7 +124,7 @@ class Game {
   startBattle(){
     if(this.party.length===0){this.showNotification('Add heroes to party first!');return;}
     this.party.forEach(h=>{h.hp=h.maxHp;h.isAlive=true;h.energy=0;h.shield=0;h.defBuff=0;h.cooldowns=[0,0,0];});
-    this.battle=new BattleSystem(this.party,this.stage,this.bossIndex);
+    this.battle=new BattleSystem(this.party,this.stage);
     this.battle.autoBattle=this.autoBattle;this.battle.battleSpeed=this.battleSpeed;
     this.screen='BATTLE';
   }
