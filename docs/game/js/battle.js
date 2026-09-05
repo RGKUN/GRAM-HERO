@@ -38,7 +38,19 @@ class BattleSystem {
     this.bossDefeated = false;
     this.totalKills = 0;
     this.bossAppearTimer = 0;
+    this.isBossFight = false;
+    this.wavesCleared = false;
+    this.heroHpSnapshot = []; // save HP before boss to restore on defeat
     this.startWave();
+  }
+  saveHeroHp() {
+    this.heroHpSnapshot = this.allParty.map(h=>({ hp:h.hp, maxHp:h.maxHp, isAlive:h.isAlive, energy:h.energy }));
+  }
+  restoreHeroHp() {
+    this.heroHpSnapshot.forEach((snap,i)=>{
+      const h = this.allParty[i];
+      if(h){ h.hp=Math.floor(snap.maxHp*0.6); h.isAlive=true; h.energy=Math.floor(snap.energy*0.5); }
+    });
   }
   startWave() {
     this.enemies = generateWave(this.stage, this.currentWave);
@@ -56,6 +68,7 @@ class BattleSystem {
     if (this.isVictory||this.isDefeat) return;
     this.turnTimer++;
     if (this.state==='BOSS_INTRO') { this.bossAppearTimer--; if(this.bossAppearTimer<=0) { this.state='BATTLE'; this.walkDelay=50; } return; }
+    if (this.state==='WAVES_CLEARED') return; // Wait for player to tap ATTACK BOSS
     if (this.state!=='BATTLE') { if(this.turnTimer>80) { this.state='BATTLE'; this.walkDelay=50; this.allParty.forEach(h=>{ if(h.isAlive) h.setAction('idle'); }); } return; }
     if (this.walkDelay > 0) { this.walkDelay--; return; }
     if (this.turnTimer < Math.floor(this.turnDelay/this.battleSpeed)) return;
@@ -143,15 +156,58 @@ class BattleSystem {
 
     this.party.forEach(h=>{ h.defBuff=0; });
 
-    if (this.party.every(h=>!h.isAlive)) { this.isDefeat=true; this.state='DEFEAT'; events.emit('battle_end',{result:'DEFEAT'}); return; }
+    if (this.party.every(h=>!h.isAlive)) {
+      if (this.isBossFight) {
+        // Lost to boss → restore heroes, restart waves (AFK retry)
+        this.restoreHeroHp();
+        this.isBossFight = false;
+        this.bossDefeated = false;
+        this.currentWave = 0;
+        this.wavesCleared = false;
+        this.turn = 0;
+        this.rewards = { xp:0, gold:0 };
+        this.showWaveNotice = 'Defeated! Back to grinding...';
+        this.waveNoticeTimer = 100;
+        this.startWave();
+        return;
+      }
+      // Lost during waves → auto-retry (AFK keeps going)
+      this.allParty.forEach(h=>{ h.hp=Math.floor(h.maxHp*0.5); h.isAlive=true; });
+      this.currentWave = 0;
+      this.wavesCleared = false;
+      this.turn = 0;
+      this.startWave();
+      return;
+    }
     if (this.enemies.every(e=>!e.isAlive)) {
-      // Check if boss was just defeated
-      if (this.enemies.some(e=>e.isBoss)) this.bossDefeated = true;
-      if (this.bossDefeated) { this.isVictory=true; this.state='VICTORY'; events.emit('battle_end',{result:'VICTORY',rewards:this.rewards}); return; }
+      if (this.enemies.some(e=>e.isBoss)) {
+        // Boss killed → STAGE CLEAR
+        this.bossDefeated = true;
+        this.isVictory = true;
+        this.state = 'VICTORY';
+        events.emit('battle_end',{result:'VICTORY',rewards:this.rewards});
+        return;
+      }
+      // Wave cleared → next wave or show boss button
       this.currentWave++;
-      if (this.currentWave>=this.totalWaves) this.startBoss(); else this.startWave();
+      if (this.currentWave >= this.totalWaves) {
+        // All waves done → show ATTACK BOSS button
+        this.saveHeroHp();
+        this.wavesCleared = true;
+        this.state = 'WAVES_CLEARED';
+        return;
+      }
+      this.startWave();
     }
     this.turn++;
+  }
+  showWaveNotice = '';
+  waveNoticeTimer = 0;
+  bossAttack() {
+    // Player tapped ATTACK BOSS — start boss fight
+    this.isBossFight = true;
+    this.wavesCleared = false;
+    this.startBoss();
   }
   calcDmg(hero,enemy,power) {
     return Math.max(1, Math.floor(hero.atk*power*100/(100+enemy.def)));
@@ -379,6 +435,13 @@ aliveE.forEach((enemy,i)=>{
       ctx.fillStyle='#f1c40f'; ctx.font='bold 12px monospace';
       ctx.fillText(this.enemies[0]?.name||'', W/2, 63);
     }
+    if (this.waveNoticeTimer > 0) {
+      this.waveNoticeTimer--;
+      ctx.fillStyle='rgba(139,0,0,0.8)';
+      ctx.beginPath(); ctx.roundRect(W*0.1, H/2-30, W*0.8, 50, 10); ctx.fill();
+      ctx.fillStyle='#f59e0b'; ctx.font='bold 13px monospace'; ctx.textAlign='center';
+      ctx.fillText(this.showWaveNotice, W/2, H/2+5);
+    }
     if (this.isVictory) {
       ctx.fillStyle='rgba(0,0,0,0.65)'; ctx.fillRect(0,0,W,H);
       const g = ctx.createRadialGradient(W/2,H/2,0,W/2,H/2,150);
@@ -393,14 +456,34 @@ aliveE.forEach((enemy,i)=>{
       ctx.font='10px monospace'; ctx.fillStyle='#6b7280';
       ctx.fillText('Tap to continue', W/2, H/2+50);
     }
-    if (this.isDefeat) {
-      ctx.fillStyle='rgba(0,0,0,0.65)'; ctx.fillRect(0,0,W,H);
-      ctx.fillStyle='#e74c3c'; ctx.font='bold 32px monospace'; ctx.textAlign='center';
-      ctx.fillText('DEFEAT', W/2, H/2-30);
-      ctx.font='12px monospace'; ctx.fillStyle='#94a3b8';
-      ctx.fillText('Your heroes fell in battle', W/2, H/2+5);
-      ctx.fillStyle='#6b7280'; ctx.font='10px monospace';
-      ctx.fillText('Tap to retry', W/2, H/2+40);
+    if (this.state==='WAVES_CLEARED') {
+      // Semi-transparent overlay with ATTACK BOSS button
+      ctx.fillStyle='rgba(0,0,0,0.55)';
+      ctx.beginPath(); ctx.roundRect(W*0.1, H*0.38, W*0.8, 160, 12); ctx.fill();
+      ctx.strokeStyle='#e74c3c'; ctx.lineWidth=2;
+      ctx.beginPath(); ctx.roundRect(W*0.1, H*0.38, W*0.8, 160, 12); ctx.stroke();
+      ctx.lineWidth=1;
+      ctx.fillStyle='#f1c40f'; ctx.font='bold 14px monospace'; ctx.textAlign='center';
+      ctx.fillText('⚔ ALL WAVES CLEARED ⚔', W/2, H*0.38+30);
+      // Boss preview
+      const stageData = CONFIG.stages[this.stage] || CONFIG.stages[0];
+      const bossData = CONFIG.bosses[stageData.bossIdx];
+      ctx.fillStyle='#e74c3c'; ctx.font='bold 18px monospace';
+      ctx.fillText('BOSS', W/2, H*0.38+60);
+      ctx.fillStyle='#f1c40f'; ctx.font='bold 12px monospace';
+      ctx.fillText(bossData ? bossData.name : '???', W/2, H*0.38+80);
+      // Attack Boss button
+      const bx=W*0.2, by=H*0.38+95, bw=W*0.6, bh=48;
+      ctx.fillStyle='#dc2626';
+      ctx.beginPath(); ctx.roundRect(bx,by,bw,bh,10); ctx.fill();
+      ctx.fillStyle='rgba(255,255,255,0.15)';
+      ctx.fillRect(bx+4,by+2,bw-8,bh*0.4);
+      ctx.fillStyle='#fff'; ctx.font='bold 15px monospace';
+      ctx.fillText('⚔ ATTACK BOSS ⚔', W/2, by+30);
+      // Store button bounds for tap
+      this.bossButton = { x:bx, y:by, w:bw, h:bh };
+    } else {
+      this.bossButton = null;
     }
   }
 }

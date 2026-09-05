@@ -82,7 +82,13 @@ class Game {
     if(this.gachaResult){this.gachaResult=null;return;}
     if(this.notification){this.notification=null;return;}
     if(this.screen==='BATTLE'&&this.battle){
-      if(this.battle.isVictory||this.battle.isDefeat){this.screen='HOME';this.battle=null;return;}
+      if(this.battle.isVictory){this.screen='HOME';this.battle=null;return;}
+      // Check ATTACK BOSS button
+      const bb = this.battle.bossButton;
+      if(bb && x>=bb.x && x<=bb.x+bb.w && y>=bb.y && y<=bb.y+bb.h){
+        this.battle.bossAttack();
+        return;
+      }
       const btn=this.ui.handleTap(x,y,this.W,this.H);
       if(btn==='autoToggle'){this.autoBattle=!this.autoBattle;this.battle.autoBattle=this.autoBattle;}
       return;
