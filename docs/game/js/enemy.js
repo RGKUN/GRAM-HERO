@@ -126,7 +126,7 @@ class Enemy {
       const fs = this.isBoss ? s*1.5 : s;
       ctx.fillRect(x-fs*0.4, y-fs*1.2, fs*0.8, fs*1.5);
       this.hitFlash--;
-      if (!this.isBoss && this.animAction !== 'hit') this.animAction = 'hit';
+      if (this.animAction !== 'hit') this.setAction('hit');
     }
     // Shield
     if (this.shield > 0) {

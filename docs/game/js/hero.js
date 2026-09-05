@@ -116,8 +116,8 @@ class Hero {
           }
         } else if (this.animAction==='hit') {
           if (this.animFrame >= maxFrames) {
-            this.animFrame = maxFrames - 1;
-            this.animTimer = -20;
+            this.animAction = 'idle';
+            this.animFrame = 0;
           }
         } else {
           this.animFrame = this.animFrame % maxFrames;
@@ -177,7 +177,7 @@ class Hero {
       ctx.fillStyle = `rgba(255,255,255,${this.hitFlash/8*0.5})`;
       ctx.fillRect(x-s*0.3, y-s*1.15, s*0.6, s*1.2);
       this.hitFlash--;
-      if (hasSprite && this.animAction !== 'attack') this.setAction('hit');
+      if (hasSprite && this.animAction !== 'attack' && this.animAction !== 'hit') this.setAction('hit');
     }
     // Heal flash
     if (this.healFlash > 0) {
