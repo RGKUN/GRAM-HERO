@@ -23,6 +23,11 @@ class Game {
       const count = anim==='attack'?6:anim==='hit'?2:4;
       for(let i=1;i<=count;i++) imgs['swordman_'+anim+'_'+i]='assets/swordman/'+anim+'_'+String(i).padStart(2,'0')+'.png';
     });
+    // Slime sprites
+    ['idle','walk','hit','death'].forEach(anim => {
+      const count = anim==='hit'?2:4;
+      for(let i=1;i<=count;i++) imgs['slime_'+anim+'_'+i]='assets/slime/'+anim+'_'+String(i).padStart(2,'0')+'.png';
+    });
     for(const[k,v] of Object.entries(imgs)){
       const img=new Image();
       img.onload=((key,img)=>()=>{this.assets[key]=img;console.log('[ASSETS] Loaded:'+key);})(k,img);
@@ -31,11 +36,6 @@ class Game {
     }
     // SFX
     this.sfx={};
-    // Slime sprites
-    ['idle','walk','hit','death'].forEach(anim => {
-      const count = anim==='hit'?2:4;
-      for(let i=1;i<=count;i++) imgs['slime_'+anim+'_'+i]='assets/slime/'+anim+'_'+String(i).padStart(2,'0')+'.png';
-    });
     ['sword_1','sword_2','sword_3'].forEach(k=>{
       this.sfx[k]=new Audio('assets/sfx/'+k+'.wav');
       this.sfx[k].volume=0.8;
