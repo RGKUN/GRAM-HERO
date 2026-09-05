@@ -42,12 +42,12 @@ const CONFIG = {
       ]
     }
   },
-  koroco: {
-    NORMAL: { name: 'Koroco', colors: { body: '#7f8c8d', accent: '#95a5a6', eye: '#e74c3c' }, hp: 100, atk: 15, def: 5 },
-    TANK: { name: 'Iron Koroco', colors: { body: '#27ae60', accent: '#2ecc71', eye: '#f39c12' }, hp: 180, atk: 8, def: 15 },
-    ATTACK: { name: 'Fury Koroco', colors: { body: '#e67e22', accent: '#d35400', eye: '#e74c3c' }, hp: 60, atk: 25, def: 3 },
-    RANGED: { name: 'Arcane Koroco', colors: { body: '#8e44ad', accent: '#9b59b6', eye: '#f1c40f' }, hp: 80, atk: 18, def: 4 },
-    SUPPORT: { name: 'Shaman Koroco', colors: { body: '#f1c40f', accent: '#f39c12', eye: '#2ecc71' }, hp: 90, atk: 10, def: 6 }
+  slime: {
+    NORMAL: { name: 'Slime', colors: { body: '#7f8c8d', accent: '#95a5a6', eye: '#e74c3c' }, hp: 100, atk: 15, def: 5 },
+    TANK: { name: 'Iron Slime', colors: { body: '#27ae60', accent: '#2ecc71', eye: '#f39c12' }, hp: 180, atk: 8, def: 15 },
+    ATTACK: { name: 'Fury Slime', colors: { body: '#e67e22', accent: '#d35400', eye: '#e74c3c' }, hp: 60, atk: 25, def: 3 },
+    RANGED: { name: 'Arcane Slime', colors: { body: '#8e44ad', accent: '#9b59b6', eye: '#f1c40f' }, hp: 80, atk: 18, def: 4 },
+    SUPPORT: { name: 'Shaman Slime', colors: { body: '#f1c40f', accent: '#f39c12', eye: '#2ecc71' }, hp: 90, atk: 10, def: 6 }
   },
   bosses: [
     { name: 'Stone Golem', mech: 'highDef', colors: { body: '#7f8c8d', accent: '#95a5a6', eye: '#e74c3c' }, hp: 800, atk: 30, def: 30 },
@@ -57,18 +57,18 @@ const CONFIG = {
     { name: 'Crystal Lord', mech: 'shield', colors: { body: '#16a085', accent: '#1abc9c', eye: '#ecf0f1' }, hp: 1500, atk: 25, def: 25 },
     { name: 'Phantom Queen', mech: 'speed', colors: { body: '#6c5ce7', accent: '#a29bfe', eye: '#fd79a8' }, hp: 1100, atk: 42, def: 8 },
     { name: 'Venom Lord', mech: 'poison', colors: { body: '#27ae60', accent: '#2ecc71', eye: '#e74c3c' }, hp: 1000, atk: 32, def: 18 },
-    { name: 'Koroco King', mech: 'summon', colors: { body: '#f39c12', accent: '#f1c40f', eye: '#e74c3c' }, hp: 1300, atk: 30, def: 20 },
+    { name: 'Giant Slime King', mech: 'summon', colors: { body: '#f39c12', accent: '#f1c40f', eye: '#e74c3c' }, hp: 1300, atk: 30, def: 20 },
     { name: 'Shadow Stalker', mech: 'crit', colors: { body: '#2d3436', accent: '#636e72', eye: '#e74c3c' }, hp: 1200, atk: 45, def: 10 },
     { name: 'Iron Guardian', mech: 'tank', colors: { body: '#95a5a6', accent: '#bdc3c7', eye: '#3498db' }, hp: 1800, atk: 28, def: 30 },
     { name: 'Dark Priest', mech: 'healer', colors: { body: '#8e44ad', accent: '#6c3483', eye: '#e74c3c' }, hp: 1000, atk: 38, def: 14 },
     { name: 'Storm Titan', mech: 'aoe', colors: { body: '#34495e', accent: '#2c3e50', eye: '#3498db' }, hp: 1600, atk: 40, def: 20 },
     { name: 'Berserker King', mech: 'berserk', colors: { body: '#e74c3c', accent: '#c0392b', eye: '#f1c40f' }, hp: 1400, atk: 50, def: 12 },
     { name: 'Void Emperor', mech: 'shield', colors: { body: '#2d3436', accent: '#6c5ce7', eye: '#e74c3c' }, hp: 1700, atk: 45, def: 18 },
-    { name: 'Grand Koroco', mech: 'final', colors: { body: '#c843cf', accent: '#a855f7', eye: '#fbbf24' }, hp: 2500, atk: 55, def: 25 }
+    { name: 'Grand Slime', mech: 'final', colors: { body: '#c843cf', accent: '#a855f7', eye: '#fbbf24' }, hp: 2500, atk: 55, def: 25 }
   ],
   gacha: { heroCost: 100, heroCost10: 900, heroRates: { COMMON: 50, RARE: 30, EPIC: 15, LEGENDARY: 4.5, MYTHIC: 0.5 }, pityLegendary: 10, pityMythic: 40 },
-  economy: { korocoGold: [10, 50], bossGold: [200, 500], korocoXp: [100, 300], bossXp: [500, 1500] },
-  battle: { waveCount: 3, minKorocoPerWave: [2, 3, 4] }
+  economy: { slimeGold: [10, 50], bossGold: [200, 500], slimeXp: [100, 300], bossXp: [500, 1500] },
+  battle: { waveCount: 3, minSlimePerWave: [2, 3, 4] }
 };
 const RARITY = {
   COMMON: { name: 'Common', color: '#95a5a6', glow: '#7f8c8d', multiplier: 1.0 },

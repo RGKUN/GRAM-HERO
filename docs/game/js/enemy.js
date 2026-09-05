@@ -12,7 +12,7 @@ class Enemy {
       this.xp = Math.floor(500 * (1+bossIndex*0.3) * scale);
       this.gold = Math.floor(200 * (1+bossIndex*0.3) * scale);
     } else {
-      const k = CONFIG.koroco[type];
+      const k = CONFIG.slime[type];
       this.name = k.name;
       this.colors = k.colors;
       this.mech = null;
@@ -28,13 +28,14 @@ class Enemy {
     this.rageAct = false;
     this.animFrame = 0;
     this.animTimer = 0;
+    this.animAction = 'idle';
     this.hitFlash = 0;
     this._counted = false;
     this.id = Utils.generateUUID();
   }
   takeDamage(dmg) {
     const mitigated = Math.max(1, Math.floor(dmg*100/(100+this.def)));
-    this.hitFlash = 8;
+    this.hitFlash = 15;
     if (this.shield > 0) { const a=Math.min(this.shield,mitigated); this.shield-=a; return Math.max(0,mitigated-a); }
     this.hp -= mitigated;
     if (this.hp <= 0) { this.hp = 0; this.isAlive = false; }
@@ -47,7 +48,7 @@ class Enemy {
     switch(this.mech) {
       case 'shield': this.shield = Math.floor(this.maxHp*0.2); fx.push({type:'shield',t:30}); break;
       case 'summon':
-        if (enemies.filter(e=>e.isKoroco&&e.isAlive).length<4) { enemies.push(new Enemy('NORMAL',0.8)); fx.push({type:'summon',t:30}); }
+        if (enemies.filter(e=>true&&e.isAlive).length<4) { enemies.push(new Enemy('NORMAL',0.8)); fx.push({type:'summon',t:30}); }
         break;
       case 'healer': {
         const t = enemies.find(e=>e.isAlive&&e.hp<e.maxHp);
@@ -60,55 +61,79 @@ class Enemy {
   }
   draw(ctx, x, y, size) {
     if (!this.isAlive) return;
-    const s = this.isBoss ? size*1.5 : size;
+    const s = size;
     this.animTimer++;
-    if (this.animTimer%24===0) this.animFrame=(this.animFrame+1)%2;
-    const bob = this.animFrame===0 ? 0 : -2;
-    const c = this.colors;
-    // Shadow
-    ctx.fillStyle = 'rgba(0,0,0,0.4)';
-    ctx.beginPath(); ctx.ellipse(x, y+4, s*0.5, s*0.12, 0,0,Math.PI*2); ctx.fill();
-    // Body
-    ctx.fillStyle = c.body;
-    ctx.fillRect(x-s*0.35, y-s*0.85+bob, s*0.7, s*0.55);
-    // Belly
-    ctx.fillStyle = c.accent;
-    ctx.fillRect(x-s*0.25, y-s*0.5+bob, s*0.5, s*0.2);
-    // Head
-    ctx.fillStyle = c.body;
-    ctx.fillRect(x-s*0.25, y-s*1.15+bob, s*0.5, s*0.35);
-    // Eyes
-    ctx.fillStyle = c.eye;
-    ctx.fillRect(x-s*0.15, y-s*0.95+bob, s*0.1, s*0.12);
-    ctx.fillRect(x+s*0.05, y-s*0.95+bob, s*0.1, s*0.12);
-    // Boss crown
-    if (this.isBoss) {
-      ctx.fillStyle = c.eye;
-      for (let i=0;i<3;i++) {
-        ctx.fillRect(x-s*0.2+i*s*0.14, y-s*1.28+bob, s*0.07, s*0.1);
+    const g = window.game && window.game.assets;
+
+    // Slime sprites (non-boss)
+    if (!this.isBoss && g) {
+      const speed = this.animAction==='hit'?14:12;
+      const maxFrames = this.animAction==='hit'?2:4;
+      if (this.animTimer % speed === 0) {
+        this.animFrame++;
+        if (this.animAction === 'hit') {
+          if (this.animFrame >= maxFrames) { this.animAction = 'idle'; this.animFrame = 0; }
+        } else {
+          this.animFrame = this.animFrame % maxFrames;
+        }
       }
-      // Boss glow
-      ctx.strokeStyle = Utils.hexToRgba(c.eye, 0.5);
-      ctx.lineWidth = 2;
-      ctx.strokeRect(x-s*0.35-4, y-s*1.25+bob, s*0.7+8, s*0.9+8);
-      ctx.lineWidth = 1;
+      const img = g['slime_'+this.animAction+'_'+(this.animFrame+1)];
+      // Shadow
+      ctx.fillStyle = 'rgba(0,0,0,0.4)';
+      ctx.beginPath(); ctx.ellipse(x, y+4, s*0.5, s*0.12, 0,0,Math.PI*2); ctx.fill();
+      if (img) {
+        ctx.drawImage(img, x-s*0.5, y-s*1.2, s, s*1.5);
+      } else {
+        // Fallback rectangle
+        const c = this.colors;
+        ctx.fillStyle = c.body;
+        ctx.fillRect(x-s*0.35, y-s*0.85, s*0.7, s*0.55);
+      }
+    } else {
+      // Boss: still rectangle-based (will be replaced with Giant Slime sprites later)
+      const sc = this.isBoss ? 1.5 : 1;
+      const ss = s * sc;
+      if (this.animTimer%24===0) this.animFrame=(this.animFrame+1)%2;
+      const bob = this.animFrame===0 ? 0 : -2;
+      const c = this.colors;
+      ctx.fillStyle = 'rgba(0,0,0,0.4)';
+      ctx.beginPath(); ctx.ellipse(x, y+4, ss*0.5, ss*0.12, 0,0,Math.PI*2); ctx.fill();
+      ctx.fillStyle = c.body;
+      ctx.fillRect(x-ss*0.35, y-ss*0.85+bob, ss*0.7, ss*0.55);
+      ctx.fillStyle = c.accent;
+      ctx.fillRect(x-ss*0.25, y-ss*0.5+bob, ss*0.5, ss*0.2);
+      ctx.fillStyle = c.body;
+      ctx.fillRect(x-ss*0.25, y-ss*1.15+bob, ss*0.5, ss*0.35);
+      ctx.fillStyle = c.eye;
+      ctx.fillRect(x-ss*0.15, y-ss*0.95+bob, ss*0.1, ss*0.12);
+      ctx.fillRect(x+ss*0.05, y-ss*0.95+bob, ss*0.1, ss*0.12);
+      if (this.isBoss) {
+        ctx.fillStyle = c.eye;
+        for (let i=0;i<3;i++) ctx.fillRect(x-ss*0.2+i*ss*0.14, y-ss*1.28+bob, ss*0.07, ss*0.1);
+        ctx.strokeStyle = Utils.hexToRgba(c.eye, 0.5); ctx.lineWidth = 2;
+        ctx.strokeRect(x-ss*0.35-4, y-ss*1.25+bob, ss*0.7+8, ss*0.9+8); ctx.lineWidth = 1;
+      }
     }
-    // Hit flash
-    if (this.hitFlash>0) {
-      ctx.fillStyle = `rgba(255,255,255,${this.hitFlash/8*0.5})`;
-      ctx.fillRect(x-s*0.35, y-s*1.15+bob, s*0.7, s*0.9);
+
+    // Hit flash (both)
+    if (this.hitFlash > 0) {
+      ctx.fillStyle = `rgba(255,255,255,${this.hitFlash/15*0.5})`;
+      const fs = this.isBoss ? s*1.5 : s;
+      ctx.fillRect(x-fs*0.4, y-fs*1.2, fs*0.8, fs*1.5);
       this.hitFlash--;
+      if (!this.isBoss && this.animAction !== 'hit') this.animAction = 'hit';
     }
     // Shield
-    if (this.shield>0) {
-      ctx.strokeStyle = '#3498db';
-      ctx.lineWidth = 2;
-      ctx.strokeRect(x-s*0.35-3, y-s*1.2+bob, s*0.7+6, s*0.95+6);
+    if (this.shield > 0) {
+      ctx.strokeStyle = '#3498db'; ctx.lineWidth = 2;
+      const fs = this.isBoss ? s*1.5 : s;
+      ctx.strokeRect(x-fs*0.4-3, y-fs*1.25, fs*0.8+6, fs*1.3+6);
       ctx.lineWidth = 1;
     }
     // HP bar
-    const bw = s*0.7, bh = this.isBoss?6:4;
-    const bx = x-bw/2, by = y-s*1.35;
+    const fs = this.isBoss ? s*1.5 : s;
+    const bw = fs*0.7, bh = this.isBoss?6:4;
+    const bx = x-bw/2, by = y-fs*1.35;
     ctx.fillStyle = '#1a1a2e';
     ctx.fillRect(bx-1,by-1,bw+2,bh+2);
     ctx.fillStyle = '#333'; ctx.fillRect(bx,by,bw,bh);
@@ -124,8 +149,8 @@ class Enemy {
 }
 function generateWave(stage, waveNum) {
   const enemies = [];
-  const types = Object.keys(CONFIG.koroco);
-  const count = CONFIG.battle.minKorocoPerWave[Math.min(waveNum, CONFIG.battle.minKorocoPerWave.length-1)];
+  const types = Object.keys(CONFIG.slime);
+  const count = CONFIG.battle.minSlimePerWave[Math.min(waveNum, CONFIG.battle.minSlimePerWave.length-1)];
   const scale = 1 + (stage-1)*0.15 + waveNum*0.1;
   for (let i=0;i<count;i++) enemies.push(new Enemy(types[Utils.rand(0,types.length-1)], scale));
   return enemies;

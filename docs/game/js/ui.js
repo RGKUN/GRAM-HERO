@@ -62,7 +62,7 @@ class UIManager {
     }
     // Buttons
     const bw=W-30, bh=42;
-    this.drawButton(ctx,15,225,bw,44,'#16a34a','⚔  BATTLE','Fight Koroco & Boss');
+    this.drawButton(ctx,15,225,bw,44,'#16a34a','⚔  BATTLE','Fight Slime & Boss');
     this.drawButton(ctx,15,278,bw/2-5,38,'#2563eb','👥 HEROES');
     this.drawButton(ctx,bw/2+20,278,bw/2-5,38,'#7c3aed','🎰 GACHA');
     this.drawButton(ctx,15,324,bw/2-5,38,'#d97706','📜 QUESTS');

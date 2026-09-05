@@ -31,6 +31,11 @@ class Game {
     }
     // SFX
     this.sfx={};
+    // Slime sprites
+    ['idle','walk','hit','death'].forEach(anim => {
+      const count = anim==='hit'?2:4;
+      for(let i=1;i<=count;i++) imgs['slime_'+anim+'_'+i]='assets/slime/'+anim+'_'+String(i).padStart(2,'0')+'.png';
+    });
     ['sword_1','sword_2','sword_3'].forEach(k=>{
       this.sfx[k]=new Audio('assets/sfx/'+k+'.wav');
       this.sfx[k].volume=0.8;
