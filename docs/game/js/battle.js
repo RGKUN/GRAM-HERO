@@ -146,6 +146,8 @@ class BattleSystem {
 
     if (this.party.every(h=>!h.isAlive)) { this.isDefeat=true; this.state='DEFEAT'; events.emit('battle_end',{result:'DEFEAT'}); return; }
     if (this.enemies.every(e=>!e.isAlive)) {
+      // Check if boss was just defeated
+      if (this.enemies.some(e=>e.isBoss)) this.bossDefeated = true;
       if (this.bossDefeated) { this.isVictory=true; this.state='VICTORY'; events.emit('battle_end',{result:'VICTORY',rewards:this.rewards}); return; }
       this.currentWave++;
       if (this.currentWave>=this.totalWaves) this.startBoss(); else this.startWave();
