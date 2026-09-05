@@ -28,6 +28,11 @@ class Game {
       const count = anim==='hit'?2:4;
       for(let i=1;i<=count;i++) imgs['slime_'+anim+'_'+i]='assets/slime/'+anim+'_'+String(i).padStart(2,'0')+'.png';
     });
+    // Giant Slime (boss) sprites
+    ['idle','walk','attack','hit','death'].forEach(anim => {
+      const count = anim==='attack'?6:anim==='hit'?2:4;
+      for(let i=1;i<=count;i++) imgs['giant_'+anim+'_'+i]='assets/giant_slime/'+anim+'_'+String(i).padStart(2,'0')+'.png';
+    });
     for(const[k,v] of Object.entries(imgs)){
       const img=new Image();
       img.onload=((key,img)=>()=>{this.assets[key]=img;console.log('[ASSETS] Loaded:'+key);})(k,img);

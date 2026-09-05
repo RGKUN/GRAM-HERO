@@ -42,6 +42,7 @@ class Enemy {
     if (this.mech==='rage' && this.hp/this.maxHp<0.3 && !this.rageAct) { this.atk = Math.floor(this.atk*1.5); this.rageAct=true; }
     return mitigated;
   }
+  setAction(a) { if (this.animAction !== a) { this.animAction = a; this.animFrame = 0; this.animTimer = 0; } }
   applyMechanic(enemies) {
     const fx = [];
     if (!this.isBoss || !this.isAlive) return fx;
@@ -89,30 +90,34 @@ class Enemy {
         ctx.fillStyle = c.body;
         ctx.fillRect(x-s*0.35, y-s*0.85, s*0.7, s*0.55);
       }
-    } else {
-      // Boss: still rectangle-based (will be replaced with Giant Slime sprites later)
-      const sc = this.isBoss ? 1.5 : 1;
-      const ss = s * sc;
-      if (this.animTimer%24===0) this.animFrame=(this.animFrame+1)%2;
-      const bob = this.animFrame===0 ? 0 : -2;
-      const c = this.colors;
-      ctx.fillStyle = 'rgba(0,0,0,0.4)';
-      ctx.beginPath(); ctx.ellipse(x, y+4, ss*0.5, ss*0.12, 0,0,Math.PI*2); ctx.fill();
-      ctx.fillStyle = c.body;
-      ctx.fillRect(x-ss*0.35, y-ss*0.85+bob, ss*0.7, ss*0.55);
-      ctx.fillStyle = c.accent;
-      ctx.fillRect(x-ss*0.25, y-ss*0.5+bob, ss*0.5, ss*0.2);
-      ctx.fillStyle = c.body;
-      ctx.fillRect(x-ss*0.25, y-ss*1.15+bob, ss*0.5, ss*0.35);
-      ctx.fillStyle = c.eye;
-      ctx.fillRect(x-ss*0.15, y-ss*0.95+bob, ss*0.1, ss*0.12);
-      ctx.fillRect(x+ss*0.05, y-ss*0.95+bob, ss*0.1, ss*0.12);
-      if (this.isBoss) {
-        ctx.fillStyle = c.eye;
-        for (let i=0;i<3;i++) ctx.fillRect(x-ss*0.2+i*ss*0.14, y-ss*1.28+bob, ss*0.07, ss*0.1);
-        ctx.strokeStyle = Utils.hexToRgba(c.eye, 0.5); ctx.lineWidth = 2;
-        ctx.strokeRect(x-ss*0.35-4, y-ss*1.25+bob, ss*0.7+8, ss*0.9+8); ctx.lineWidth = 1;
+    } else if (this.isBoss && g) {
+      // Giant Slime boss sprites
+      const speed = this.animAction==='attack'?10:this.animAction==='hit'?14:12;
+      const maxFrames = this.animAction==='attack'?6:this.animAction==='hit'?2:4;
+      if (this.animTimer % speed === 0) {
+        this.animFrame++;
+        if (this.animAction === 'attack' || this.animAction === 'hit') {
+          if (this.animFrame >= maxFrames) { this.animAction = 'idle'; this.animFrame = 0; }
+        } else {
+          this.animFrame = this.animFrame % maxFrames;
+        }
       }
+      const img = g['giant_'+this.animAction+'_'+(this.animFrame+1)];
+      const ss = s * 1.3;
+      ctx.fillStyle = 'rgba(0,0,0,0.4)';
+      ctx.beginPath(); ctx.ellipse(x, y+4, ss*0.5, ss*0.15, 0,0,Math.PI*2); ctx.fill();
+      if (img) {
+        ctx.drawImage(img, x-ss*0.5, y-ss*1.2, ss, ss*1.5);
+      } else {
+        // Fallback rectangle
+        const c = this.colors;
+        ctx.fillStyle = c.body;
+        ctx.fillRect(x-ss*0.35, y-ss*0.85, ss*0.7, ss*0.55);
+      }
+    } else {
+      // Fallback for non-slime non-boss
+      ctx.fillStyle = 'rgba(0,0,0,0.4)';
+      ctx.beginPath(); ctx.ellipse(x, y+4, s*0.5, s*0.12, 0,0,Math.PI*2); ctx.fill();
     }
 
     // Hit flash (both)

@@ -132,6 +132,7 @@ class BattleSystem {
 
     this.enemies.forEach(enemy=>{
       if (!enemy.isAlive) return;
+      enemy.setAction('attack');
       const front = this.party.filter(h=>h.isAlive&&h.position==='FRONT');
       const targets = front.length>0 ? front : this.party.filter(h=>h.isAlive);
       if (targets.length===0) return;
