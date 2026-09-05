@@ -174,6 +174,7 @@ class BattleSystem {
     const tx = target._dx||0, ty = target._dy||0;
     // Arc the projectile slightly
     const dist = Math.max(1, Math.abs(tx-ex));
+    console.log('[PROJECTILE] Spawn:',enemy.name,'->',target.name,'ex:',ex,'ey:',ey,'tx:',tx,'ty:',ty);
     this.projectiles.push({
       x:ex, y:ey-20,
       fromX:ex, fromY:ey-20,
@@ -188,26 +189,25 @@ class BattleSystem {
   }
   updateProjectiles() {
     this.projectiles.forEach(p=>{
-      if (!p.active) return;
       p.t++;
-      const prog = Math.min(1, p.t/p.dur);
-      const eased = prog<0.5 ? 2*prog*prog : 1-Math.pow(-2*prog+2,2)/2;
-      p.x = p.fromX + (p.toX-p.fromX)*eased;
-      p.y = p.fromY + (p.toY-p.fromY)*eased - Math.sin(prog*Math.PI)*18; // arc
-      if (prog >= 1) {
-        p.active = false;
-        if (!p.hit && p.target && p.target.isAlive) {
-          p.hit = true;
-          const a = p.target.takeDamage(p.enemy.atk);
-          this.addNum(p.target,'-'+a,'#e74c3c',12);
-          p.target.hitFlash = 8;
-          this.screenShake = Math.max(this.screenShake, 3);
+      if (p.active) {
+        const prog = Math.min(1, p.t/p.dur);
+        const eased = prog<0.5 ? 2*prog*prog : 1-Math.pow(-2*prog+2,2)/2;
+        p.x = p.fromX + (p.toX-p.fromX)*eased;
+        p.y = p.fromY + (p.toY-p.fromY)*eased - Math.sin(prog*Math.PI)*18;
+        if (prog >= 1) {
+          p.active = false;
+          if (p.target && p.target.isAlive) {
+            const a = p.target.takeDamage(p.enemy.atk);
+            this.addNum(p.target,'-'+a,'#e74c3c',12);
+            p.target.hitFlash = 8;
+            this.screenShake = Math.max(this.screenShake, 3);
+          }
         }
       }
     });
-    this.projectiles = this.projectiles.filter(p=>p.active || p.hit);
-    // Remove hit projectiles after brief show
-    this.projectiles = this.projectiles.filter(p=>!(p.hit && p.t>p.dur+6));
+    // Remove projectiles after 8 frames past hit
+    this.projectiles = this.projectiles.filter(p=>p.t < p.dur+8);
   }
   updateFx() {
     this.updateProjectiles();
@@ -297,15 +297,31 @@ aliveE.forEach((enemy,i)=>{
 
     // Projectiles (water spit)
     this.projectiles.forEach(p=>{
-      if (!p.active) return;
-      ctx.fillStyle = 'rgba(56,189,248,0.9)';
+      if (!p.active && p.t >= p.dur+4) return;
+      const alpha = !p.active ? 0.5 : 1;
+      ctx.globalAlpha = alpha;
+      // Outer glow
+      const glow = ctx.createRadialGradient(p.x,p.y,2,p.x,p.y,16);
+      glow.addColorStop(0,'rgba(56,189,248,0.6)');
+      glow.addColorStop(1,'rgba(56,189,248,0)');
+      ctx.fillStyle=glow;
+      ctx.beginPath(); ctx.arc(p.x,p.y,16,0,Math.PI*2); ctx.fill();
+      // Main orb
+      ctx.fillStyle = '#38bdf8';
       ctx.beginPath();
-      ctx.arc(p.x, p.y, 7, 0, Math.PI*2);
+      ctx.arc(p.x, p.y, 10, 0, Math.PI*2);
       ctx.fill();
-      ctx.fillStyle = 'rgba(224,242,254,0.7)';
+      // Highlight
+      ctx.fillStyle = 'rgba(224,242,254,0.8)';
       ctx.beginPath();
-      ctx.arc(p.x-2, p.y-2, 3, 0, Math.PI*2);
+      ctx.arc(p.x-3, p.y-3, 4, 0, Math.PI*2);
       ctx.fill();
+      // Trail
+      ctx.fillStyle = 'rgba(56,189,248,0.3)';
+      ctx.beginPath();
+      ctx.arc(p.x+(p.fromX-p.x)*0.2, p.y+(p.fromY-p.y)*0.2+5, 6, 0, Math.PI*2);
+      ctx.fill();
+      ctx.globalAlpha = 1;
     });
 
     // Damage numbers
