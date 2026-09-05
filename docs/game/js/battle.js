@@ -19,6 +19,9 @@ class BattleSystem {
     this.totalWaves = CONFIG.battle.waveCount;
     this.enemies = [];
     this.turn = 0;
+    this.screenShake = 0;
+    this.heroLunge = {}; // hero index -> lunge timer
+    this.enemyRecoil = {}; // enemy index -> recoil timer
     this.autoBattle = true;
     this.battleSpeed = 1;
     this.state = 'WAVE_INTRO';
@@ -58,6 +61,7 @@ class BattleSystem {
       hero.tickCooldowns();
       hero.addEnergy(3);
       hero.setAction('attack');
+      this.heroLunge[hero.id] = 8;
       const target = this.enemies.find(e=>e.isAlive);
       if (!target) return;
       let usedSkill = null;
@@ -91,7 +95,7 @@ class BattleSystem {
             } else {
               this.playSfx('sword_2');
               const d=this.calcDmg(hero,target,skill.power);
-              const a=target.takeDamage(d);
+              const a=target.takeDamage(d); this.screenShake=4;
               this.addNum(target,'-'+a,'#ff8a65',13);
             }
             break;
@@ -105,7 +109,7 @@ class BattleSystem {
         let a = target.takeDamage(d);
         if (isCrit) {
           const cd = Math.floor(d*hero.critDmg);
-          a = target.takeDamage(cd-d);
+          a = target.takeDamage(cd-d); this.screenShake=6;
           this.addNum(target,'-'+(d+a),'#f1c40f',15);
           this.addFx('crit',target);
         } else {
@@ -147,6 +151,12 @@ class BattleSystem {
     return Math.max(1, Math.floor(hero.atk*power*100/(100+enemy.def)));
   }
   addNum(target,text,color,size) {
+    // Trigger enemy recoil + lighter screen shake on any damage
+    if (target && this.enemies.includes(target)) {
+      const idx = this.enemies.indexOf(target);
+      if (idx >= 0) { if (!this.enemyRecoil[idx]) this.enemyRecoil[idx]=6; }
+    }
+    this.screenShake = Math.max(this.screenShake, 2);
     this.damageNumbers.push({ text, x:(target._dx||0)+Utils.rand(-8,8), y:(target._dy||0)-20, color, size, life:35, vy:-0.8 });
   }
   addFx(type,source) {
@@ -155,6 +165,9 @@ class BattleSystem {
   updateFx() {
     this.damageNumbers = this.damageNumbers.filter(n=>{ n.y+=n.vy; n.life--; return n.life>0; });
     this.effects = this.effects.filter(e=>{ e.timer--; return e.timer>0; });
+    if (this.screenShake > 0) this.screenShake--;
+    for (const k in this.heroLunge) { if (this.heroLunge[k] > 0) this.heroLunge[k]--; }
+    for (const k in this.enemyRecoil) { if (this.enemyRecoil[k] > 0) this.enemyRecoil[k]--; }
   }
   drawBattle(ctx, W, H) {
     // BG image full (no ground overlay)
@@ -189,6 +202,12 @@ class BattleSystem {
     // easeInOutCubic
     t = t<0.5 ? 4*t*t*t : 1-Math.pow(-2*t+2,3)/2;
 
+    // Screen shake
+    const shkX = this.screenShake > 0 ? (Math.random()-0.5)*this.screenShake*2 : 0;
+    const shkY = this.screenShake > 0 ? (Math.random()-0.5)*this.screenShake*2 : 0;
+    ctx.save();
+    ctx.translate(shkX, shkY);
+
     // Heroes (left side, walk right toward center)
     this.allParty.forEach((hero,i)=>{
       const startX = W*0.08 + i*55;
@@ -197,8 +216,11 @@ class BattleSystem {
       const startY = fightY + 30 + i*20;
       const endY = fightY + (hero.position==='FRONT'?20:45) - i*10;
       const y = startY + (endY - startY) * t;
-      hero._dx=x; hero._dy=y;
-      hero.draw(ctx,x,y,65);
+      // Lunge forward when attacking
+      const lunge = (this.heroLunge[hero.id]||0);
+      const lungeX = lunge > 4 ? (8-lunge)*12 : lunge > 0 ? lunge*12 : 0;
+      hero._dx=x+lungeX; hero._dy=y;
+      hero.draw(ctx,x+lungeX,y,65);
     });
 
     // Enemies (right side, walk left toward center)
@@ -210,9 +232,14 @@ class BattleSystem {
       const startY = fightY + (enemy.isBoss?-20:20) + i*15;
       const endY = fightY + (enemy.isBoss?-20:20) + i*10;
       const y = startY + (endY - startY) * t;
-      enemy._dx=x; enemy._dy=y;
-      enemy.draw(ctx,x,y,enemy.isBoss?70:50);
+      // Recoil when hit
+      const recoil = (this.enemyRecoil[i]||0);
+      const recoilX = recoil > 0 ? recoil * 4 : 0;
+      enemy._dx=x+recoilX; enemy._dy=y;
+      enemy.draw(ctx,x+recoilX,y,enemy.isBoss?70:50);
     });
+
+    ctx.restore(); // End shake transform
 
     // Damage numbers
     this.damageNumbers.forEach(n=>{
