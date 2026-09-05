@@ -22,6 +22,7 @@ class BattleSystem {
     this.screenShake = 0;
     this.heroLunge = {}; // hero index -> lunge timer
     this.enemyRecoil = {}; // enemy index -> recoil timer
+    this.enemyLunge = {}; // enemy index -> lunge timer (attack)
     this.walkDelay = 0;
     this.autoBattle = true;
     this.battleSpeed = 1;
@@ -130,9 +131,10 @@ class BattleSystem {
     const boss = this.enemies.find(e=>e.isBoss&&e.isAlive);
     if (boss && this.turn%3===0) boss.applyMechanic(this.enemies);
 
-    this.enemies.forEach(enemy=>{
+    this.enemies.forEach((enemy,ei)=>{
       if (!enemy.isAlive) return;
       enemy.setAction('attack');
+      this.enemyLunge[ei] = 15; // lunge toward heroes
       const front = this.party.filter(h=>h.isAlive&&h.position==='FRONT');
       const targets = front.length>0 ? front : this.party.filter(h=>h.isAlive);
       if (targets.length===0) return;
@@ -174,7 +176,8 @@ class BattleSystem {
     this.effects = this.effects.filter(e=>{ e.timer--; return e.timer>0; });
     if (this.screenShake > 0) this.screenShake--;
     for (const k in this.heroLunge) { if (this.heroLunge[k] > 0) this.heroLunge[k]--; }
-    for (const k in this.enemyRecoil) { if (this.enemyRecoil[k] > 0) this.enemyRecoil[k]--; }
+    for (const k in this.enemyRecoil) { if (this.enemyRecoil[k] > 0) this.enemyRecoil[k]--; else if (this.enemyRecoil[k] < 0) this.enemyRecoil[k]++; }
+    for (const k in this.enemyLunge) { if (this.enemyLunge[k] > 0) this.enemyLunge[k]--; }
   }
   drawBattle(ctx, W, H) {
     // BG image full (no ground overlay)
@@ -233,16 +236,7 @@ class BattleSystem {
     // Enemies (right side, walk left toward center)
     const aliveE = this.enemies.filter(e=>e.isAlive);
 
-    // Enemy counter-attack: enemies lunge toward heroes
-    if (this.turnTimer > 0 && this.turnTimer < 10) {
-      aliveE.forEach((enemy,i) => {
-        if (!this.enemyRecoil[i] || this.enemyRecoil[i] <= 0) {
-          this.enemyRecoil[i] = -8; // negative = lunge forward (toward heroes)
-        }
-      });
-    }
-
-    aliveE.forEach((enemy,i)=>{
+aliveE.forEach((enemy,i)=>{
       const startX = W*0.92 - i*55;
       const endX = centerX + 60 + i*52;
       const x = startX + (endX - startX) * t;
@@ -251,9 +245,13 @@ class BattleSystem {
       const y = startY + (endY - startY) * t;
       // Recoil when hit (positive) or lunge forward (negative)
       const recoil = (this.enemyRecoil[i]||0);
+      const lunge = (this.enemyLunge[i]||0);
+      // Lunge: move left (toward heroes) then bounce back
+      const lungeX = lunge > 8 ? (15-lunge)*6 : lunge > 0 ? lunge*6 : 0;
       const recoilX = recoil > 0 ? recoil * 4 : (recoil < 0 ? recoil * 5 : 0);
-      enemy._dx=x+recoilX; enemy._dy=y;
-      enemy.draw(ctx,x+recoilX,y,enemy.isBoss?70:50);
+      const finalX = x - lungeX + recoilX;
+      enemy._dx=finalX; enemy._dy=y;
+      enemy.draw(ctx,finalX,y,enemy.isBoss?70:50);
     });
 
     ctx.restore(); // End shake transform
