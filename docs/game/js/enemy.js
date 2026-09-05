@@ -132,13 +132,8 @@ class Enemy {
       this.hitFlash--;
       if (this.animAction !== 'hit' && this.animAction !== 'attack') this.setAction('hit');
     }
-    // Shield
-    if (this.shield > 0) {
-      ctx.strokeStyle = '#3498db'; ctx.lineWidth = 2;
-      const fs = this.isBoss ? s*1.3 : s;
-      ctx.strokeRect(x-fs*0.4-2, y-fs*1.15, fs*0.8+4, fs*1.2+4);
-      ctx.lineWidth = 1;
-    }
+    // Shield (subtle blue tint only, no frame)
+    // removed blue border per user request
     // HP bar
     const fs = this.isBoss ? s*1.3 : s;
     const bw = fs*0.7, bh = this.isBoss?6:4;
