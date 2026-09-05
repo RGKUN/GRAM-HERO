@@ -61,7 +61,7 @@ class BattleSystem {
       hero.tickCooldowns();
       hero.addEnergy(3);
       hero.setAction('attack');
-      this.heroLunge[hero.id] = 8;
+      this.heroLunge[hero.id] = 20;
       const target = this.enemies.find(e=>e.isAlive);
       if (!target) return;
       let usedSkill = null;
@@ -216,12 +216,21 @@ class BattleSystem {
       const startY = fightY + 30 + i*20;
       const endY = fightY + (hero.position==='FRONT'?20:45) - i*10;
       const y = startY + (endY - startY) * t;
-      // Lunge forward when attacking
+      // Lunge forward when attacking (smooth: ramp up then back)
       const lunge = (this.heroLunge[hero.id]||0);
-      const lungeX = lunge > 4 ? (8-lunge)*12 : lunge > 0 ? lunge*12 : 0;
+      const lungeX = lunge > 10 ? (20-lunge)*8 : lunge > 0 ? lunge*8 : 0;
       hero._dx=x+lungeX; hero._dy=y;
       hero.draw(ctx,x+lungeX,y,65);
     });
+
+    // Enemy counter-attack: enemies lunge toward heroes
+    if (this.turnTimer > 0 && this.turnTimer < 10) {
+      aliveE.forEach((enemy,i) => {
+        if (!this.enemyRecoil[i] || this.enemyRecoil[i] <= 0) {
+          this.enemyRecoil[i] = -8; // negative = lunge forward (toward heroes)
+        }
+      });
+    }
 
     // Enemies (right side, walk left toward center)
     const aliveE = this.enemies.filter(e=>e.isAlive);
@@ -232,9 +241,9 @@ class BattleSystem {
       const startY = fightY + (enemy.isBoss?-20:20) + i*15;
       const endY = fightY + (enemy.isBoss?-20:20) + i*10;
       const y = startY + (endY - startY) * t;
-      // Recoil when hit
+      // Recoil when hit (positive) or lunge forward (negative)
       const recoil = (this.enemyRecoil[i]||0);
-      const recoilX = recoil > 0 ? recoil * 4 : 0;
+      const recoilX = recoil > 0 ? recoil * 4 : (recoil < 0 ? recoil * 5 : 0);
       enemy._dx=x+recoilX; enemy._dy=y;
       enemy.draw(ctx,x+recoilX,y,enemy.isBoss?70:50);
     });

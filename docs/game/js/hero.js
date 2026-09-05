@@ -107,11 +107,17 @@ class Hero {
       const maxFrames = this.animAction==='attack'?6:this.animAction==='hit'?2:4;
       if (this.animTimer % speed === 0) {
         this.animFrame++;
-        if (this.animAction==='attack' || this.animAction==='hit') {
-          // Play once then return to idle
+        if (this.animAction==='attack') {
           if (this.animFrame >= maxFrames) {
-            if (this.animAction==='hit') { this.animFrame=maxFrames-1; this.animTimer=-30; }
-            else { this.animAction = 'idle'; this.animFrame = 0; }
+            // Hold last attack frame briefly then return to idle
+            this.animFrame = maxFrames - 1;
+            this.animTimer = -20;
+            this.animAction = 'idle';
+          }
+        } else if (this.animAction==='hit') {
+          if (this.animFrame >= maxFrames) {
+            this.animFrame = maxFrames - 1;
+            this.animTimer = -20;
           }
         } else {
           this.animFrame = this.animFrame % maxFrames;
