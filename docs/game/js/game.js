@@ -90,7 +90,7 @@ class Game {
         return;
       }
       const btn=this.ui.handleTap(x,y,this.W,this.H);
-      if(btn==='autoToggle'){this.autoBattle=!this.autoBattle;this.battle.autoBattle=this.autoBattle;}
+      if(btn==='battleBack'){this.screen='HOME';this.battle=null;return;} if(btn==='autoToggle'){this.autoBattle=!this.autoBattle;this.battle.autoBattle=this.autoBattle;}
       return;
     }
     if(this.screen==='GACHA'){

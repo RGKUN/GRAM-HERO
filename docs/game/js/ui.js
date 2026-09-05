@@ -110,7 +110,15 @@ class UIManager {
     ctx.fillText(this.game.autoBattle?'⚔ AUTO':'✋ TAP', bx+bw/2, by+22);
     ctx.fillStyle='#f1c40f'; ctx.font='bold 10px monospace';
     ctx.fillText(`${this.game.battleSpeed}x`, bx+bw/2, by+42);
-    this.buttons={autoToggle:{x:bx,y:by,w:bw,h:bh}};
+    // Back to Home button
+    const bbx=15, bby=H-120, bbw=70, bbh=35;
+    ctx.fillStyle='rgba(0,0,0,0.75)';
+    ctx.beginPath(); ctx.roundRect(bbx,bby,bbw,bbh,8); ctx.fill();
+    ctx.strokeStyle='#6b7280'; ctx.lineWidth=1;
+    ctx.beginPath(); ctx.roundRect(bbx,bby,bbw,bbh,8); ctx.stroke();
+    ctx.fillStyle='#e2e8f0'; ctx.font='bold 10px monospace'; ctx.textAlign='center';
+    ctx.fillText('← HOME', bbx+bbw/2, bby+22);
+    this.buttons={autoToggle:{x:bx,y:by,w:bw,h:bh},battleBack:{x:bbx,y:bby,w:bbw,h:bbh}};
   }
   drawQuests(ctx, W, H) {
     ctx.fillStyle='#0d1117'; ctx.fillRect(0,0,W,H);
