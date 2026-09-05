@@ -230,6 +230,9 @@ class BattleSystem {
       hero.draw(ctx,x+lungeX,y,65);
     });
 
+    // Enemies (right side, walk left toward center)
+    const aliveE = this.enemies.filter(e=>e.isAlive);
+
     // Enemy counter-attack: enemies lunge toward heroes
     if (this.turnTimer > 0 && this.turnTimer < 10) {
       aliveE.forEach((enemy,i) => {
@@ -239,8 +242,6 @@ class BattleSystem {
       });
     }
 
-    // Enemies (right side, walk left toward center)
-    const aliveE = this.enemies.filter(e=>e.isAlive);
     aliveE.forEach((enemy,i)=>{
       const startX = W*0.92 - i*55;
       const endX = centerX + 60 + i*52;
