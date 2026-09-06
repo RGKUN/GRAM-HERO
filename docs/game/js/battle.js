@@ -32,7 +32,7 @@ class BattleSystem {
     this.projectiles = [];
     this.battleLog = [];
     this.turnTimer = 0;
-    this.turnDelay = 65;
+    this.turnDelay = 30;
     this.isVictory = false;
     this.isDefeat = false;
     this.bossDefeated = false;
@@ -61,15 +61,15 @@ class BattleSystem {
   startBoss() {
     this.enemies = [generateBoss(this.stage)];
     this.state = 'BOSS_INTRO';
-    this.bossAppearTimer = 80;
+    this.bossAppearTimer = 35;
     this.allParty.forEach(h=>{ if(h.isAlive) h.setAction('walk'); });
   }
   update() {
     if (this.isVictory||this.isDefeat) return;
     this.turnTimer++;
-    if (this.state==='BOSS_INTRO') { this.bossAppearTimer--; if(this.bossAppearTimer<=0) { this.state='BATTLE'; this.walkDelay=50; } return; }
+    if (this.state==='BOSS_INTRO') { this.bossAppearTimer--; if(this.bossAppearTimer<=0) { this.state='BATTLE'; this.walkDelay=18; } return; }
     if (this.state==='WAVES_CLEARED') return; // Wait for player to tap ATTACK BOSS
-    if (this.state!=='BATTLE') { if(this.turnTimer>80) { this.state='BATTLE'; this.walkDelay=50; this.allParty.forEach(h=>{ if(h.isAlive) h.setAction('idle'); }); } return; }
+    if (this.state!=='BATTLE') { if(this.turnTimer>35) { this.state='BATTLE'; this.walkDelay=18; this.allParty.forEach(h=>{ if(h.isAlive) h.setAction('idle'); }); } return; }
     if (this.walkDelay > 0) { this.walkDelay--; return; }
     if (this.turnTimer < Math.floor(this.turnDelay/this.battleSpeed)) return;
     this.turnTimer = 0;
@@ -302,7 +302,7 @@ class BattleSystem {
     // Smooth walk: ease-in-out interpolation
     const centerX = W/2;
     const fightY = H*0.55;
-    const walkDur = 80; // frames for full walk
+    const walkDur = 35; // frames for full walk
     let t = this.state==='WAVE_INTRO' || this.state==='BOSS_INTRO' ? Math.min(1, this.turnTimer/walkDur) : 1;
     // easeInOutCubic
     t = t<0.5 ? 4*t*t*t : 1-Math.pow(-2*t+2,3)/2;
