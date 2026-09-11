@@ -40,6 +40,7 @@ class BattleSystem {
     this.bossAppearTimer = 0;
     this.isBossFight = false;
     this.wavesCleared = false;
+    this.bossDelay = 0;
     this.heroHpSnapshot = []; // save HP before boss to restore on defeat
     this.startWave();
   }
@@ -68,7 +69,11 @@ class BattleSystem {
     if (this.isVictory||this.isDefeat) return;
     this.turnTimer++;
     if (this.state==='BOSS_INTRO') { this.bossAppearTimer--; if(this.bossAppearTimer<=0) { this.state='BATTLE'; this.walkDelay=18; } return; }
-    if (this.state==='WAVES_CLEARED') return; // Wait for player to tap ATTACK BOSS
+    if (this.state==='WAVES_CLEARED') {
+      this.bossDelay++;
+      if (this.bossDelay > 80) { this.bossAttack(); this.bossDelay=0; }
+      return;
+    }
     if (this.state!=='BATTLE') { if(this.turnTimer>35) { this.state='BATTLE'; this.walkDelay=18; this.allParty.forEach(h=>{ if(h.isAlive) h.setAction('idle'); }); } return; }
     if (this.walkDelay > 0) { this.walkDelay--; return; }
     if (this.turnTimer < Math.floor(this.turnDelay/this.battleSpeed)) return;
@@ -164,6 +169,7 @@ class BattleSystem {
         this.bossDefeated = false;
         this.currentWave = 0;
         this.wavesCleared = false;
+    this.bossDelay = 0;
         this.turn = 0;
         this.rewards = { xp:0, gold:0 };
         this.showWaveNotice = 'Defeated! Back to grinding...';
@@ -175,6 +181,7 @@ class BattleSystem {
       this.allParty.forEach(h=>{ h.hp=Math.floor(h.maxHp*0.5); h.isAlive=true; });
       this.currentWave = 0;
       this.wavesCleared = false;
+    this.bossDelay = 0;
       this.turn = 0;
       this.startWave();
       return;
@@ -206,7 +213,9 @@ class BattleSystem {
   bossAttack() {
     // Player tapped ATTACK BOSS — start boss fight
     this.isBossFight = true;
+    this.bossDelay = 0;
     this.wavesCleared = false;
+    this.bossDelay = 0;
     this.startBoss();
   }
   calcDmg(hero,enemy,power) {
@@ -456,32 +465,24 @@ aliveE.forEach((enemy,i)=>{
       ctx.font='10px monospace'; ctx.fillStyle='#6b7280';
       ctx.fillText('Tap to continue', W/2, H/2+50);
     }
-    if (this.state==='WAVES_CLEARED') {
-      // Semi-transparent overlay with ATTACK BOSS button
-      ctx.fillStyle='rgba(0,0,0,0.55)';
-      ctx.beginPath(); ctx.roundRect(W*0.1, H*0.38, W*0.8, 160, 12); ctx.fill();
-      ctx.strokeStyle='#e74c3c'; ctx.lineWidth=2;
-      ctx.beginPath(); ctx.roundRect(W*0.1, H*0.38, W*0.8, 160, 12); ctx.stroke();
-      ctx.lineWidth=1;
-      ctx.fillStyle='#f1c40f'; ctx.font='bold 14px monospace'; ctx.textAlign='center';
-      ctx.fillText('⚔ ALL WAVES CLEARED ⚔', W/2, H*0.38+30);
-      // Boss preview
+        if (this.state==='WAVES_CLEARED') {
       const stageData = CONFIG.stages[this.stage] || CONFIG.stages[0];
       const bossData = CONFIG.bosses[stageData.bossIdx];
-      ctx.fillStyle='#e74c3c'; ctx.font='bold 18px monospace';
-      ctx.fillText('BOSS', W/2, H*0.38+60);
+      const bossName = bossData ? bossData.name : '???';
+      ctx.fillStyle='rgba(0,0,0,0.7)';
+      ctx.beginPath(); ctx.roundRect(W*0.1, H*0.38, W*0.8, 110, 12); ctx.fill();
+      ctx.strokeStyle='#e74c3c'; ctx.lineWidth=2;
+      ctx.beginPath(); ctx.roundRect(W*0.1, H*0.38, W*0.8, 110, 12); ctx.stroke();
+      ctx.lineWidth=1;
+      ctx.fillStyle='#f1c40f'; ctx.font='bold 14px monospace'; ctx.textAlign='center';
+      ctx.fillText('⚔ ALL WAVES CLEARED ⚔', W/2, H*0.38+28);
+      ctx.fillStyle='#e74c3c'; ctx.font='bold 16px monospace';
+      ctx.fillText('⚠ BOSS INCOMING ⚠', W/2, H*0.38+54);
       ctx.fillStyle='#f1c40f'; ctx.font='bold 12px monospace';
-      ctx.fillText(bossData ? bossData.name : '???', W/2, H*0.38+80);
-      // Attack Boss button
-      const bx=W*0.2, by=H*0.38+95, bw=W*0.6, bh=48;
-      ctx.fillStyle='#dc2626';
-      ctx.beginPath(); ctx.roundRect(bx,by,bw,bh,10); ctx.fill();
-      ctx.fillStyle='rgba(255,255,255,0.15)';
-      ctx.fillRect(bx+4,by+2,bw-8,bh*0.4);
-      ctx.fillStyle='#fff'; ctx.font='bold 15px monospace';
-      ctx.fillText('⚔ ATTACK BOSS ⚔', W/2, by+30);
-      // Store button bounds for tap
-      this.bossButton = { x:bx, y:by, w:bw, h:bh };
+      ctx.fillText(bossName, W/2, H*0.38+76);
+      ctx.fillStyle='#94a3b8'; ctx.font='10px monospace';
+      ctx.fillText('Starting soon...', W/2, H*0.38+96);
+      this.bossButton = null;
     } else {
       this.bossButton = null;
     }
