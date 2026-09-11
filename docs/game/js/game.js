@@ -82,6 +82,13 @@ class Game {
   handleTap(x,y){
     if(this.gachaResult){this.gachaResult=null;return;}
     if(this.notification){this.notification=null;return;}
+    // Nav bar tap — instant response, highest priority
+    if(y>this.H-50 && this.screen!=='HOME'){
+      const iw=this.W/4;
+      const navItems=['HOME','HEROES','GACHA','QUESTS'];
+      const tapped=navItems[Math.floor(x/iw)]||null;
+      if(tapped){this.screen=tapped;return;}
+    }
     // HOME = Battle screen (AFK always running)
     if(this.screen==='HOME'&&this.battle){
       if(this.battle.isVictory){this.battle=null;this.startBattle();return;}

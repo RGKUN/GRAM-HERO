@@ -227,7 +227,7 @@ class UIManager {
     for(const [n,b] of Object.entries(this.buttons)) {
       if(x>=b.x&&x<=b.x+b.w&&y>=b.y&&y<=b.y+b.h) return n;
     }
-    if(y>H-50) { const iw=W/4; return ['HOME','BATTLE','HEROES','GACHA'][Math.floor(x/iw)]||null; }
+    if(y>H-50) { const iw=W/4; return ['HOME','HEROES','GACHA','QUESTS'][Math.floor(x/iw)]||null; }
     return null;
   }
 }
