@@ -49,8 +49,9 @@ class Game {
   init() {
     const starter=new Hero('SWORDMAN','COMMON',1,1);
     this.heroes.push(starter); this.party.push(starter);
-    this.showNotification('Welcome Hero! Tap BATTLE to start!');
-    this.setupEvents(); this.setupInput(); this.gameLoop();
+    this.setupEvents(); this.setupInput();
+    this.startBattle();
+    this.gameLoop();
   }
   setupEvents() {
     events.on('battle_end',(data)=>{
@@ -81,8 +82,9 @@ class Game {
   handleTap(x,y){
     if(this.gachaResult){this.gachaResult=null;return;}
     if(this.notification){this.notification=null;return;}
-    if(this.screen==='BATTLE'&&this.battle){
-      if(this.battle.isVictory){this.screen='HOME';this.battle=null;return;}
+    // HOME = Battle screen (AFK always running)
+    if(this.screen==='HOME'&&this.battle){
+      if(this.battle.isVictory){this.battle=null;this.startBattle();return;}
       // Check ATTACK BOSS button
       const bb = this.battle.bossButton;
       if(bb && x>=bb.x && x<=bb.x+bb.w && y>=bb.y && y<=bb.y+bb.h){
@@ -90,7 +92,19 @@ class Game {
         return;
       }
       const btn=this.ui.handleTap(x,y,this.W,this.H);
-      if(btn==='battleBack'){this.screen='HOME';this.battle=null;return;} if(btn==='autoToggle'){this.autoBattle=!this.autoBattle;this.battle.autoBattle=this.autoBattle;}
+      if(btn==='autoToggle'){this.autoBattle=!this.autoBattle;this.battle.autoBattle=this.autoBattle;}
+      else if(['HEROES','GACHA','QUESTS'].includes(btn))this.screen=btn;
+      return;
+    }
+    if(this.screen==='HEROES'){
+      const btn=this.ui.handleTap(x,y,this.W,this.H);
+      if(btn==='HOME'){this.screen='HOME';return;}
+      if(['GACHA','QUESTS'].includes(btn)){this.screen=btn;return;}
+      // Toggle hero in party
+      const cols=3,slotW=(this.W-30)/cols,slotH=88;
+      const col=Math.floor((x-15)/slotW),row=Math.floor((y-200)/(slotH+5));
+      const idx=row*cols+col;
+      if(idx>=0&&idx<this.heroes.length)this.toggleParty(this.heroes[idx]);
       return;
     }
     if(this.screen==='GACHA'){
@@ -98,28 +112,14 @@ class Game {
       if(btn==='btn1x'&&this.diamond>=100){this.diamond-=100;const h=this.gacha.pullHero();this.heroes.push(h);this.gachaResult=h;this.dailyQuests.forEach(q=>{if(q.type==='gacha'&&!q.completed)q.progress++;});}
       else if(btn==='btn10x'&&this.diamond>=900){this.diamond-=900;const hs=this.gacha.pullHero10();hs.forEach(h=>this.heroes.push(h));this.gachaResult=hs[hs.length-1];}
       else if(btn==='back')this.screen='HOME';
-      else if(['HOME','HEROES'].includes(btn))this.screen=btn;
+      else if(['HOME','HEROES','QUESTS'].includes(btn))this.screen=btn;
       return;
     }
-    if(this.screen==='HEROES'){
+    if(this.screen==='QUESTS'){
       const btn=this.ui.handleTap(x,y,this.W,this.H);
-      if(btn==='HOME'||btn==='GACHA'){this.screen=btn;return;}
-      if(btn==='BATTLE'){this.startBattle();return;}
-      // Toggle hero in party
-      const cols=3,slotW=(this.W-30)/cols,slotH=88;
-      const col=Math.floor((x-15)/slotW),row=Math.floor((y-58)/(slotH+5));
-      const idx=row*cols+col;
-      if(idx>=0&&idx<this.heroes.length)this.toggleParty(this.heroes[idx]);
+      if(btn==='back')this.screen='HOME';
+      else if(['HOME','HEROES','GACHA'].includes(btn))this.screen=btn;
       return;
-    }
-    if(this.screen==='HOME'){
-      const btn=this.ui.handleTap(x,y,this.W,this.H);
-      if(btn==='battle')this.startBattle();
-      else if(btn==='heroes')this.screen='HEROES';
-      else if(btn==='gacha')this.screen='GACHA';
-      else if(btn==='quest')this.screen='QUESTS';
-      else if(btn==='BATTLE')this.startBattle();
-      else if(['HEROES','GACHA'].includes(btn))this.screen=btn;
     }
   }
   toggleParty(hero){
@@ -128,16 +128,16 @@ class Game {
     else if(this.party.length<3)this.party.push(hero);
   }
   startBattle(){
-    if(this.party.length===0){this.showNotification('Add heroes to party first!');return;}
+    if(this.party.length===0)return;
     this.party.forEach(h=>{h.hp=h.maxHp;h.isAlive=true;h.energy=0;h.shield=0;h.defBuff=0;h.cooldowns=[0,0,0];});
     this.battle=new BattleSystem(this.party,this.stage);
     this.battle.autoBattle=this.autoBattle;this.battle.battleSpeed=this.battleSpeed;
-    this.screen='BATTLE';
+    this.screen='HOME';
   }
   showNotification(t){this.notification=t;this.notificationTimer=150;}
   gameLoop(){this.update();this.draw();requestAnimationFrame(()=>this.gameLoop());}
   update(){
-    if(this.screen==='BATTLE'&&this.battle&&this.battle.autoBattle){
+    if(this.screen==='HOME'&&this.battle&&this.battle.autoBattle){
       if(!this.battle.isVictory&&!this.battle.isDefeat){this.battle.update();this.battle.updateFx();}
     }
     if(this.notification){this.notificationTimer--;if(this.notificationTimer<=0)this.notification=null;}
@@ -145,8 +145,7 @@ class Game {
   draw(){
     const ctx=this.ctx;ctx.clearRect(0,0,this.W,this.H);
     switch(this.screen){
-      case 'BATTLE':if(this.battle){this.battle.drawBattle(ctx,this.W,this.H);this.ui.drawBattleHUD(ctx,this.W,this.H);}break;
-      case 'HOME':this.ui.drawHome(ctx,this.W,this.H);break;
+      case 'HOME':if(this.battle){this.battle.drawBattle(ctx,this.W,this.H);this.ui.drawBattleHUD(ctx,this.W,this.H);}break;
       case 'HEROES':this.ui.drawHeroScreen(ctx,this.W,this.H);break;
       case 'GACHA':this.ui.drawGacha(ctx,this.W,this.H);break;
       case 'QUESTS':this.ui.drawQuests(ctx,this.W,this.H);break;

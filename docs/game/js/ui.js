@@ -18,66 +18,58 @@ class UIManager {
     if (sublabel) { ctx.font=`${Math.max(8,h*0.22)}px monospace`; ctx.fillStyle='rgba(255,255,255,0.7)'; ctx.fillText(sublabel, x+w/2, y+h*0.8); }
   }
   drawHome(ctx, W, H) {
+    // HOME is now the battle screen — this is a no-op
+    // Battle is drawn directly in game.draw()
+  }
+  drawHeroScreen(ctx, W, H) {
+    // Castle background for hero management
     if (this.game && this.game.assets && this.game.assets.bgHome) {
       ctx.drawImage(this.game.assets.bgHome, 0, 0, W, H);
-      ctx.fillStyle='rgba(0,0,0,0.5)';
+      ctx.fillStyle='rgba(0,0,0,0.6)';
       ctx.fillRect(0,0,W,H);
     } else {
       const bg = ctx.createLinearGradient(0,0,0,H);
       bg.addColorStop(0,'#0d1117'); bg.addColorStop(0.5,'#161b22'); bg.addColorStop(1,'#0d1117');
       ctx.fillStyle=bg; ctx.fillRect(0,0,W,H);
     }
-    // Decorative stars
-    ctx.fillStyle='rgba(255,255,255,0.1)';
-    for(let i=0;i<20;i++) { const sx=(i*137+50)%W, sy=(i*97+30)%(H*0.4); ctx.fillRect(sx,sy,1,1); }
     // Title
     ctx.fillStyle='#f1c40f'; ctx.font='bold 16px monospace'; ctx.textAlign='center';
-    ctx.fillText('⚔ GRAM AFK HEROES', W/2, 35);
+    ctx.fillText('⚔ GRAM AFK HEROES', W/2, 28);
+    const stg = CONFIG.stages[this.game.stage-1];
     ctx.fillStyle='#6b7280'; ctx.font='9px monospace';
-    ctx.fillText(`Stage ${this.game.stage} — Boss ${this.game.bossIndex+1}/15`, W/2, 52);
+    ctx.fillText(`Stage ${this.game.stage} — ${stg?stg.name:''}`, W/2, 44);
     // Currency
-    const curY = 68;
+    const curY = 54;
     ctx.fillStyle=Utils.hexToRgba('#1a1a2e',0.8);
-    ctx.beginPath(); ctx.roundRect(10,curY,W-20,30,6); ctx.fill();
-    ctx.fillStyle='#f1c40f'; ctx.font='bold 11px monospace'; ctx.textAlign='left';
-    ctx.fillText(`🪙 ${Utils.formatNum(this.game.gold)}`, 20, curY+20);
+    ctx.beginPath(); ctx.roundRect(10,curY,W-20,28,6); ctx.fill();
+    ctx.fillStyle='#f1c40f'; ctx.font='bold 10px monospace'; ctx.textAlign='left';
+    ctx.fillText(`🪙 ${Utils.formatNum(this.game.gold)}`, 18, curY+18);
     ctx.fillStyle='#3498db'; ctx.textAlign='right';
-    ctx.fillText(`💎 ${this.game.diamond}`, W-20, curY+20);
-    // Party
+    ctx.fillText(`💎 ${this.game.diamond}`, W-18, curY+18);
+    // Party header
     ctx.fillStyle='#e2e8f0'; ctx.font='bold 10px monospace'; ctx.textAlign='left';
-    ctx.fillText('PARTY', 15, 118);
-    const slotW = (W-40)/3;
+    ctx.fillText(`PARTY (${this.game.party.length}/3)`, 15, curY+46);
+    // Party slots
+    const slotW = (W-30)/3;
     for(let i=0;i<3;i++) {
-      const x=15+i*slotW, y=128, w=slotW-5, h=80;
+      const x=15+i*slotW, y=curY+52, w=slotW-5, h=80;
       ctx.fillStyle=Utils.hexToRgba('#1a1a2e',0.6);
       ctx.beginPath(); ctx.roundRect(x,y,w,h,6); ctx.fill();
       ctx.strokeStyle='#2d3748'; ctx.lineWidth=1;
       ctx.beginPath(); ctx.roundRect(x,y,w,h,6); ctx.stroke();
       if (this.game.party[i]) {
-        this.game.party[i].drawPortrait(ctx,x+2,y+2,w-4,h-4,this.game.party.includes(this.game.party[i]));
+        this.game.party[i].drawPortrait(ctx,x+2,y+2,w-4,h-4,true);
       } else {
         ctx.fillStyle='#4a5568'; ctx.font='9px monospace'; ctx.textAlign='center';
         ctx.fillText('Empty',x+w/2,y+h/2+3);
       }
     }
-    // Buttons
-    const bw=W-30, bh=42;
-    this.drawButton(ctx,15,225,bw,44,'#16a34a','⚔  BATTLE','Fight Slime & Boss');
-    this.drawButton(ctx,15,278,bw/2-5,38,'#2563eb','👥 HEROES');
-    this.drawButton(ctx,bw/2+20,278,bw/2-5,38,'#7c3aed','🎰 GACHA');
-    this.drawButton(ctx,15,324,bw/2-5,38,'#d97706','📜 QUESTS');
-    this.drawButton(ctx,bw/2+20,324,bw/2-5,38,'#059669','🛡 EQUIP');
-    this.buttons={battle:{x:15,y:225,w:bw,h:44},heroes:{x:15,y:278,w:bw/2-5,h:38},gacha:{x:bw/2+20,y:278,w:bw/2-5,h:38},quest:{x:15,y:324,w:bw/2-5,h:38},equip:{x:bw/2+20,y:324,w:bw/2-5,h:38}};
-    this.drawNav(ctx,W,H,'HOME');
-  }
-  drawHeroScreen(ctx, W, H) {
-    ctx.fillStyle='#0d1117'; ctx.fillRect(0,0,W,H);
-    ctx.fillStyle='#2563eb'; ctx.font='bold 16px monospace'; ctx.textAlign='center';
-    ctx.fillText('👥 HEROES', W/2, 30);
-    ctx.fillStyle='#6b7280'; ctx.font='9px monospace';
-    ctx.fillText(`Tap to add/remove from party (${this.game.party.length}/3)`, W/2, 48);
+    // All heroes header
+    const heroY = curY + 146;
+    ctx.fillStyle='#a78bfa'; ctx.font='bold 10px monospace'; ctx.textAlign='left';
+    ctx.fillText('ALL HEROES (tap to toggle party)', 15, heroY);
     const heroes = this.game.heroes;
-    const cols=3, slotW=(W-30)/cols, slotH=88;
+    const cols=3, heroSlotW=(W-30)/cols, slotH=88;
     heroes.forEach((hero,i)=>{
       const col=i%cols, row=Math.floor(i/cols);
       const x=15+col*slotW, y=58+row*(slotH+5);
@@ -89,9 +81,9 @@ class UIManager {
         ctx.lineWidth=inParty?2:1;
         ctx.beginPath(); ctx.roundRect(x,y,slotW-5,slotH,6); ctx.stroke();
         ctx.lineWidth=1;
-        hero.drawPortrait(ctx,x+2,y+2,slotW-9,slotH-14,inParty);
+        hero.drawPortrait(ctx,x+2,y+2,heroSlotW-9,slotH-14,inParty);
         ctx.fillStyle=inParty?'#2ecc71':'#4a5568'; ctx.font='7px monospace'; ctx.textAlign='center';
-        ctx.fillText(inParty?'✓ IN PARTY':'TAP TO ADD',x+slotW/2-2,y+slotH-2);
+        ctx.fillText(inParty?'✓ IN PARTY':'TAP TO ADD',x+heroSlotW/2-2,y+slotH-2);
       }
     });
     this.drawNav(ctx,W,H,'HEROES');
@@ -110,15 +102,7 @@ class UIManager {
     ctx.fillText(this.game.autoBattle?'⚔ AUTO':'✋ TAP', bx+bw/2, by+22);
     ctx.fillStyle='#f1c40f'; ctx.font='bold 10px monospace';
     ctx.fillText(`${this.game.battleSpeed}x`, bx+bw/2, by+42);
-    // Back to Home button
-    const bbx=15, bby=H-120, bbw=70, bbh=35;
-    ctx.fillStyle='rgba(0,0,0,0.75)';
-    ctx.beginPath(); ctx.roundRect(bbx,bby,bbw,bbh,8); ctx.fill();
-    ctx.strokeStyle='#6b7280'; ctx.lineWidth=1;
-    ctx.beginPath(); ctx.roundRect(bbx,bby,bbw,bbh,8); ctx.stroke();
-    ctx.fillStyle='#e2e8f0'; ctx.font='bold 10px monospace'; ctx.textAlign='center';
-    ctx.fillText('← HOME', bbx+bbw/2, bby+22);
-    this.buttons={autoToggle:{x:bx,y:by,w:bw,h:bh},battleBack:{x:bbx,y:bby,w:bbw,h:bbh}};
+    this.buttons={autoToggle:{x:bx,y:by,w:bw,h:bh}};
   }
   drawQuests(ctx, W, H) {
     ctx.fillStyle='#0d1117'; ctx.fillRect(0,0,W,H);
@@ -153,7 +137,7 @@ class UIManager {
     ctx.fillText(`Completed: ${done}/${this.game.dailyQuests.length}`,15,H-60);
     this.drawButton(ctx,15,H-48,100,36,'#475569','← Back');
     this.buttons={back:{x:15,y:H-48,w:100,h:36}};
-    this.drawNav(ctx,W,H,'HOME');
+    this.drawNav(ctx,W,H,'QUESTS');
   }
   drawGacha(ctx, W, H) {
     ctx.fillStyle='#0d1117'; ctx.fillRect(0,0,W,H);
@@ -223,7 +207,7 @@ class UIManager {
     ctx.fillRect(0,navY,W,navH);
     ctx.strokeStyle='#1e293b'; ctx.lineWidth=1;
     ctx.beginPath(); ctx.moveTo(0,navY); ctx.lineTo(W,navY); ctx.stroke();
-    const items=[{i:'🏠',n:'HOME'},{i:'⚔',n:'BATTLE'},{i:'👥',n:'HEROES'},{i:'🎰',n:'GACHA'}];
+    const items=[{i:'⚔',n:'HOME'},{i:'👥',n:'HEROES'},{i:'🎰',n:'GACHA'},{i:'📜',n:'QUESTS'}];
     const iw=W/items.length;
     items.forEach((item,idx)=>{
       const x=idx*iw;
