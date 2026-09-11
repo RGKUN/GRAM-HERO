@@ -102,7 +102,7 @@ class Game {
       if(['GACHA','QUESTS'].includes(btn)){this.screen=btn;return;}
       // Toggle hero in party
       const cols=3,slotW=(this.W-30)/cols,slotH=88;
-      const col=Math.floor((x-15)/slotW),row=Math.floor((y-200)/(slotH+5));
+      const col=Math.floor((x-15)/slotW),row=Math.floor((y-219)/(slotH+5));
       const idx=row*cols+col;
       if(idx>=0&&idx<this.heroes.length)this.toggleParty(this.heroes[idx]);
       return;

@@ -22,7 +22,7 @@ class UIManager {
     // Battle is drawn directly in game.draw()
   }
   drawHeroScreen(ctx, W, H) {
-    // Castle background for hero management
+    // Castle background
     if (this.game && this.game.assets && this.game.assets.bgHome) {
       ctx.drawImage(this.game.assets.bgHome, 0, 0, W, H);
       ctx.fillStyle='rgba(0,0,0,0.6)';
@@ -32,59 +32,64 @@ class UIManager {
       bg.addColorStop(0,'#0d1117'); bg.addColorStop(0.5,'#161b22'); bg.addColorStop(1,'#0d1117');
       ctx.fillStyle=bg; ctx.fillRect(0,0,W,H);
     }
-    // Title
+    // Title bar
+    ctx.fillStyle='rgba(0,0,0,0.7)';
+    ctx.fillRect(0,0,W,48);
     ctx.fillStyle='#f1c40f'; ctx.font='bold 16px monospace'; ctx.textAlign='center';
-    ctx.fillText('⚔ GRAM AFK HEROES', W/2, 28);
+    ctx.fillText('⚔ GRAM AFK HEROES', W/2, 22);
     const stg = CONFIG.stages[this.game.stage-1];
     ctx.fillStyle='#6b7280'; ctx.font='9px monospace';
-    ctx.fillText(`Stage ${this.game.stage} — ${stg?stg.name:''}`, W/2, 44);
-    // Currency
+    ctx.fillText(`Stage ${this.game.stage} — ${stg?stg.name:''}`, W/2, 38);
+    // Currency bar
     const curY = 54;
-    ctx.fillStyle=Utils.hexToRgba('#1a1a2e',0.8);
-    ctx.beginPath(); ctx.roundRect(10,curY,W-20,28,6); ctx.fill();
+    ctx.fillStyle='rgba(0,0,0,0.7)';
+    ctx.beginPath(); ctx.roundRect(10,curY,W-20,26,6); ctx.fill();
     ctx.fillStyle='#f1c40f'; ctx.font='bold 10px monospace'; ctx.textAlign='left';
-    ctx.fillText(`🪙 ${Utils.formatNum(this.game.gold)}`, 18, curY+18);
+    ctx.fillText(`🪙 ${Utils.formatNum(this.game.gold)}`, 18, curY+17);
     ctx.fillStyle='#3498db'; ctx.textAlign='right';
-    ctx.fillText(`💎 ${this.game.diamond}`, W-18, curY+18);
-    // Party header
-    ctx.fillStyle='#e2e8f0'; ctx.font='bold 10px monospace'; ctx.textAlign='left';
-    ctx.fillText(`PARTY (${this.game.party.length}/3)`, 15, curY+46);
-    // Party slots
-    const slotW = (W-30)/3;
+    ctx.fillText(`💎 ${this.game.diamond}`, W-18, curY+17);
+    // Party section
+    const partyY = 90;
+    ctx.fillStyle='#e2e8f0'; ctx.font='bold 11px monospace'; ctx.textAlign='left';
+    ctx.fillText(`PARTY (${this.game.party.length}/3)`, 15, partyY);
+    const partySlotW = (W-30)/3;
+    const partySlotH = 85;
     for(let i=0;i<3;i++) {
-      const x=15+i*slotW, y=curY+52, w=slotW-5, h=80;
-      ctx.fillStyle=Utils.hexToRgba('#1a1a2e',0.6);
-      ctx.beginPath(); ctx.roundRect(x,y,w,h,6); ctx.fill();
-      ctx.strokeStyle='#2d3748'; ctx.lineWidth=1;
-      ctx.beginPath(); ctx.roundRect(x,y,w,h,6); ctx.stroke();
+      const x=15+i*partySlotW, y=partyY+6;
+      ctx.fillStyle=Utils.hexToRgba('#1a1a2e',0.7);
+      ctx.beginPath(); ctx.roundRect(x,y,partySlotW-5,partySlotH,6); ctx.fill();
+      ctx.strokeStyle='#4a5568'; ctx.lineWidth=1;
+      ctx.beginPath(); ctx.roundRect(x,y,partySlotW-5,partySlotH,6); ctx.stroke();
       if (this.game.party[i]) {
-        this.game.party[i].drawPortrait(ctx,x+2,y+2,w-4,h-4,true);
+        this.game.party[i].drawPortrait(ctx,x+2,y+2,partySlotW-9,partySlotH-8,true);
       } else {
-        ctx.fillStyle='#4a5568'; ctx.font='9px monospace'; ctx.textAlign='center';
-        ctx.fillText('Empty',x+w/2,y+h/2+3);
+        ctx.fillStyle='#4a5568'; ctx.font='10px monospace'; ctx.textAlign='center';
+        ctx.fillText('Empty',x+partySlotW/2-2,y+partySlotH/2);
       }
     }
-    // All heroes header
-    const heroY = curY + 146;
-    ctx.fillStyle='#a78bfa'; ctx.font='bold 10px monospace'; ctx.textAlign='left';
-    ctx.fillText('ALL HEROES (tap to toggle party)', 15, heroY);
+    // All heroes section
+    const heroListY = partyY + partySlotH + 20;
+    ctx.fillStyle='#a78bfa'; ctx.font='bold 11px monospace'; ctx.textAlign='left';
+    ctx.fillText('ALL HEROES', 15, heroListY);
+    ctx.fillStyle='#6b7280'; ctx.font='9px monospace';
+    ctx.fillText('Tap to toggle party', 15, heroListY+14);
     const heroes = this.game.heroes;
-    const cols=3, heroSlotW=(W-30)/cols, slotH=88;
+    const hCols=3, hSlotW=(W-30)/hCols, hSlotH=88;
+    const gridStartY = heroListY+24;
     heroes.forEach((hero,i)=>{
-      const col=i%cols, row=Math.floor(i/cols);
-      const x=15+col*slotW, y=58+row*(slotH+5);
-      if (y>-slotH && y<H) {
-        const inParty = this.game.party.indexOf(hero)>=0;
-        ctx.fillStyle=Utils.hexToRgba('#1a1a2e',0.6);
-        ctx.beginPath(); ctx.roundRect(x,y,slotW-5,slotH,6); ctx.fill();
-        ctx.strokeStyle=inParty?RARITY[hero.rarity].color:'#2d3748';
-        ctx.lineWidth=inParty?2:1;
-        ctx.beginPath(); ctx.roundRect(x,y,slotW-5,slotH,6); ctx.stroke();
-        ctx.lineWidth=1;
-        hero.drawPortrait(ctx,x+2,y+2,heroSlotW-9,slotH-14,inParty);
-        ctx.fillStyle=inParty?'#2ecc71':'#4a5568'; ctx.font='7px monospace'; ctx.textAlign='center';
-        ctx.fillText(inParty?'✓ IN PARTY':'TAP TO ADD',x+heroSlotW/2-2,y+slotH-2);
-      }
+      const col=i%hCols, row=Math.floor(i/hCols);
+      const x=15+col*hSlotW, y=gridStartY+row*(hSlotH+5);
+      if (y<-hSlotH || y>H-50) return; // skip off-screen
+      const inParty = this.game.party.indexOf(hero)>=0;
+      ctx.fillStyle=Utils.hexToRgba('#1a1a2e',0.7);
+      ctx.beginPath(); ctx.roundRect(x,y,hSlotW-5,hSlotH,6); ctx.fill();
+      ctx.strokeStyle=inParty?RARITY[hero.rarity].color:'#2d3748';
+      ctx.lineWidth=inParty?2:1;
+      ctx.beginPath(); ctx.roundRect(x,y,hSlotW-5,hSlotH,6); ctx.stroke();
+      ctx.lineWidth=1;
+      hero.drawPortrait(ctx,x+2,y+2,hSlotW-9,hSlotH-14,inParty);
+      ctx.fillStyle=inParty?'#2ecc71':'#4a5568'; ctx.font='7px monospace'; ctx.textAlign='center';
+      ctx.fillText(inParty?'✓ IN PARTY':'TAP TO ADD',x+hSlotW/2-2,y+hSlotH-2);
     });
     this.drawNav(ctx,W,H,'HEROES');
   }
