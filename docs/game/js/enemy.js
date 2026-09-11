@@ -70,7 +70,7 @@ class Enemy {
     if (!this.isBoss && g) {
       // Regular slimes have no attack sprites; treat attack as idle
       const effAction = this.animAction==='attack' ? 'idle' : this.animAction;
-      const speed = effAction==='hit'?14:12;
+      const speed = effAction==='hit'?16:14;
       const maxFrames = effAction==='hit'?2:4;
       if (this.animTimer % speed === 0) {
         this.animFrame++;
@@ -94,7 +94,7 @@ class Enemy {
       }
     } else if (this.isBoss && g) {
       // Giant Slime boss sprites
-      const speed = this.animAction==='attack'?10:this.animAction==='hit'?14:12;
+      const speed = this.animAction==='attack'?12:this.animAction==='hit'?16:14;
       const maxFrames = this.animAction==='attack'?6:this.animAction==='hit'?2:4;
       if (this.animTimer % speed === 0) {
         this.animFrame++;
