@@ -103,6 +103,7 @@ class UIManager {
     ctx.fillStyle='#f1c40f'; ctx.font='bold 10px monospace';
     ctx.fillText(`${this.game.battleSpeed}x`, bx+bw/2, by+42);
     this.buttons={autoToggle:{x:bx,y:by,w:bw,h:bh}};
+    this.drawNav(ctx,W,H,'HOME');
   }
   drawQuests(ctx, W, H) {
     ctx.fillStyle='#0d1117'; ctx.fillRect(0,0,W,H);
