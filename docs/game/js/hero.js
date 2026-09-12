@@ -95,6 +95,15 @@ class Hero {
       }
       return;
     }
+    // Fallback death for non-sprited heroes
+    if (!this.isAlive) {
+      const c = this.colors;
+      ctx.globalAlpha = 0.5;
+      ctx.fillStyle = c.body;
+      ctx.fillRect(x-size*0.3, y-size*0.6, size*0.6, size*0.4);
+      ctx.globalAlpha = 1;
+      return;
+    }
     const s = size;
     this.animTimer++;
 
@@ -133,43 +142,70 @@ class Hero {
         ctx.drawImage(img, x-s*0.5, y-s*1.2, s, s*1.5);
       }
     } else {
-      // Fallback: rectangle-based (other heroes)
-      if (this.animTimer % 20 === 0) this.animFrame = (this.animFrame + 1) % 2;
-      const bobY = this.animFrame === 0 ? 0 : -2;
+      // Fallback: procedural animation for non-sprited heroes
       const c = this.colors;
+      // Advance frames based on action
+      const fbSpeed = this.animAction==='attack'?6:this.animAction==='walk'?10:this.animAction==='hit'?12:24;
+      if (this.animTimer % fbSpeed === 0) {
+        this.animFrame++;
+        if (this.animAction==='attack' && this.animFrame >= 5) { this.animAction='idle'; this.animFrame=0; }
+        else if (this.animAction==='hit' && this.animFrame >= 2) { this.animAction='idle'; this.animFrame=0; }
+        else this.animFrame = this.animFrame % 8;
+      }
+      // Position offsets by action
+      let bobY = 0, leanX = 0, tilt = 0, squash = 1;
+      if (this.animAction==='walk') {
+        bobY = -Math.abs(Math.sin(this.animTimer/5))*3;
+        leanX = 2;
+      } else if (this.animAction==='attack') {
+        const p = this.animFrame/5;
+        bobY = -Math.sin(p*Math.PI*2)*2;
+        leanX = 10*Math.sin(p*Math.PI);
+        squash = 1 - 0.1*Math.sin(p*Math.PI*2);
+      } else if (this.animAction==='hit') {
+        tilt = this.animFrame===0 ? 0.15 : -0.1;
+        leanX = -4;
+      } else {
+        bobY = -Math.abs(Math.sin(this.animTimer/20))*2; // idle breathing
+      }
       ctx.fillStyle = 'rgba(0,0,0,0.4)';
       ctx.beginPath();
       ctx.ellipse(x, y+4, s*0.4, s*0.1, 0, 0, Math.PI*2);
       ctx.fill();
+      const dx = x + leanX + (tilt?tilt*s:0);
+      ctx.save();
+      if (tilt) { ctx.translate(x, y); ctx.rotate(tilt); ctx.translate(-x, -y); }
       ctx.fillStyle = c.body;
-      ctx.fillRect(x-s*0.3, y-s*0.9+bobY, s*0.6, s*0.5);
+      ctx.fillRect(dx-s*0.3, y-s*0.9+bobY, s*0.6*squash, s*0.5);
       ctx.fillStyle = c.accent;
-      ctx.fillRect(x-s*0.3, y-s*0.45+bobY, s*0.6, s*0.15);
+      ctx.fillRect(dx-s*0.3, y-s*0.45+bobY, s*0.6*squash, s*0.15);
       ctx.fillStyle = c.skin;
-      ctx.fillRect(x-s*0.2, y-s*1.15+bobY, s*0.4, s*0.3);
+      ctx.fillRect(dx-s*0.2, y-s*1.15+bobY, s*0.4, s*0.3);
       ctx.fillStyle = c.hair;
-      ctx.fillRect(x-s*0.22, y-s*1.18+bobY, s*0.44, s*0.12);
+      ctx.fillRect(dx-s*0.22, y-s*1.18+bobY, s*0.44, s*0.12);
       ctx.fillStyle = '#2d3436';
-      ctx.fillRect(x-s*0.1, y-s*0.95+bobY, s*0.08, s*0.08);
-      ctx.fillRect(x+s*0.05, y-s*0.95+bobY, s*0.08, s*0.08);
+      ctx.fillRect(dx-s*0.1, y-s*0.95+bobY, s*0.08, s*0.08);
+      ctx.fillRect(dx+s*0.05, y-s*0.95+bobY, s*0.08, s*0.08);
+      const swing = this.animAction==='attack' ? 6 : 0;
       ctx.fillStyle = c.weapon;
       if (this.classType === 'TANK') {
-        ctx.fillRect(x+s*0.25, y-s*0.7+bobY, s*0.25, s*0.35);
+        ctx.fillRect(dx+s*0.25+swing, y-s*0.7+bobY, s*0.25, s*0.35);
         ctx.fillStyle = '#7f8c8d';
-        ctx.fillRect(x+s*0.27, y-s*0.68+bobY, s*0.21, s*0.31);
+        ctx.fillRect(dx+s*0.27+swing, y-s*0.68+bobY, s*0.21, s*0.31);
       } else if (this.classType === 'MAGE') {
-        ctx.fillRect(x+s*0.25, y-s*0.9+bobY, s*0.06, s*0.55);
+        ctx.fillRect(dx+s*0.25, y-s*0.9+bobY-swing*0.3, s*0.06, s*0.55);
         ctx.fillStyle = '#f1c40f';
         ctx.beginPath();
-        ctx.arc(x+s*0.28, y-s*0.95+bobY, s*0.08, 0, Math.PI*2);
+        ctx.arc(dx+s*0.28, y-s*0.95+bobY-swing*0.3, s*0.08, 0, Math.PI*2);
         ctx.fill();
       } else {
-        ctx.fillRect(x+s*0.25, y-s*0.8+bobY, s*0.2, s*0.08);
+        ctx.fillRect(dx+s*0.25+swing, y-s*0.8+bobY, s*0.2, s*0.08);
         ctx.fillStyle = '#f1c40f';
         ctx.beginPath();
-        ctx.arc(x+s*0.35, y-s*0.84+bobY, s*0.06, 0, Math.PI*2);
+        ctx.arc(dx+s*0.35+swing, y-s*0.84+bobY, s*0.06, 0, Math.PI*2);
         ctx.fill();
       }
+      ctx.restore();
     }
     // Hit flash (subtle ellipse, no box)
     if (this.hitFlash > 0) {
